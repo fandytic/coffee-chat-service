@@ -18,7 +18,7 @@ import (
 
 func main() {
 	db := config.InitDB()
-	db.AutoMigrate(&entity.Message{}, &entity.Admin{}) // <-- Tambahkan migrasi Admin
+	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{}, &entity.Table{})
 
 	// Seeder untuk membuat admin default jika belum ada
 	createDefaultAdmin(db)
@@ -33,13 +33,18 @@ func main() {
 	// Inisialisasi Use Cases
 	messageUseCase := &usecase.MessageUseCase{Repo: messageRepo, Hub: hub}
 	authUseCase := &usecase.AuthUseCase{AdminRepo: adminRepo}
+	qrCodeUseCase := &usecase.QRCodeUseCase{}
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
 	authHandler := &handler.AuthHandler{AuthService: authUseCase}
+	qrCodeHandler := &handler.QRCodeHandler{QRCodeService: qrCodeUseCase}
+	floorPlanUseCase := &usecase.FloorPlanUseCase{DB: db}
+	floorPlanHandler := &handler.FloorPlanHandler{FloorPlanService: floorPlanUseCase}
 
 	app := fiber.New()
-	router.SetupRoutes(app, messageHandler, authHandler, hub) // <-- Kirim authHandler ke router
+	app.Static("/public", "./public")
+	router.SetupRoutes(app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler, hub)
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))
