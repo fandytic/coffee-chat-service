@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 
 	"coffee-chat-service/config"
 	"coffee-chat-service/modules/entity"
@@ -11,34 +13,50 @@ import (
 	"coffee-chat-service/modules/repository"
 	"coffee-chat-service/modules/usecase"
 	ws "coffee-chat-service/modules/websocket"
-	"coffee-chat-service/router" // <-- Import paket router baru
+	"coffee-chat-service/router"
 )
 
 func main() {
-	// Inisialisasi Database
 	db := config.InitDB()
-	db.AutoMigrate(&entity.Message{})
+	db.AutoMigrate(&entity.Message{}, &entity.Admin{}) // <-- Tambahkan migrasi Admin
 
-	// Inisialisasi komponen aplikasi
+	// Seeder untuk membuat admin default jika belum ada
+	createDefaultAdmin(db)
+
 	hub := ws.NewHub()
 	go hub.Run()
 
+	// Inisialisasi Repositories
 	messageRepo := repository.NewMessageRepository(db)
-	messageUseCase := &usecase.MessageUseCase{
-		Repo: messageRepo,
-		Hub:  hub,
-	}
-	messageHandler := &handler.MessageHandler{
-		MessageService: messageUseCase,
-	}
+	adminRepo := repository.NewAdminRepository(db)
 
-	// Inisialisasi Fiber
+	// Inisialisasi Use Cases
+	messageUseCase := &usecase.MessageUseCase{Repo: messageRepo, Hub: hub}
+	authUseCase := &usecase.AuthUseCase{AdminRepo: adminRepo}
+
+	// Inisialisasi Handlers
+	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
+	authHandler := &handler.AuthHandler{AuthService: authUseCase}
+
 	app := fiber.New()
+	router.SetupRoutes(app, messageHandler, authHandler, hub) // <-- Kirim authHandler ke router
 
-	// Setup semua routes dari file router.go
-	router.SetupRoutes(app, messageHandler, hub) // <-- Panggil fungsi setup router
-
-	// Start the server
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))
+}
+
+// Fungsi untuk membuat admin default
+func createDefaultAdmin(db *gorm.DB) {
+	var admin entity.Admin
+	if err := db.First(&admin, "username = ?", "admin").Error; err == gorm.ErrRecordNotFound {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+		if err != nil {
+			log.Fatalf("Failed to hash password: %v", err)
+		}
+		newAdmin := entity.Admin{Username: "admin", Password: string(hashedPassword)}
+		if err := db.Create(&newAdmin).Error; err != nil {
+			log.Fatalf("Failed to create default admin: %v", err)
+		}
+		log.Println("Default admin user created. Username: admin, Password: password123")
+	}
 }
