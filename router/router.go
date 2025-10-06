@@ -9,11 +9,12 @@ import (
 	ws "coffee-chat-service/modules/websocket"
 )
 
-func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler, hub *ws.Hub) {
+func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler, authHandler *handler.AuthHandler, hub *ws.Hub) {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
 	// Endpoint REST API
+	app.Post("/login", authHandler.Login)
 	app.Post("/send", messageHandler.SendMessage)
 	app.Get("/messages", messageHandler.GetMessages)
 
