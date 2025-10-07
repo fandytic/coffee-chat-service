@@ -25,3 +25,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 
 	return model.SuccessResponse(c, fiber.StatusOK, "Login successful", resp)
 }
+
+func (h *AuthHandler) Logout(c *fiber.Ctx) error {
+	return model.SuccessResponse(c, fiber.StatusOK, "Logout successful", nil)
+}

@@ -14,26 +14,13 @@ type FloorPlanHandler struct {
 }
 
 func (h *FloorPlanHandler) CreateFloorPlan(c *fiber.Ctx) error {
-	// Ambil file dari form
-	file, err := c.FormFile("floor_plan_image")
-	if err != nil {
-		return model.ErrorResponse(c, fiber.StatusBadRequest, "floor_plan_image is required")
+	var req model.CreateFloorPlanRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return model.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	// Ambil field lain dari form
-	floorNumberStr := c.FormValue("floor_number")
-	tablesDataJSON := c.FormValue("tables")
-
-	if floorNumberStr == "" || tablesDataJSON == "" {
-		return model.ErrorResponse(c, fiber.StatusBadRequest, "floor_number and tables are required")
-	}
-
-	floorNumber, err := strconv.Atoi(floorNumberStr)
-	if err != nil {
-		return model.ErrorResponse(c, fiber.StatusBadRequest, "floor_number must be an integer")
-	}
-
-	response, err := h.FloorPlanService.CreateFloorPlan(floorNumber, file, tablesDataJSON)
+	response, err := h.FloorPlanService.CreateFloorPlan(req)
 	if err != nil {
 		return model.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
@@ -65,7 +52,6 @@ func (h *FloorPlanHandler) GetAllFloors(c *fiber.Ctx) error {
 }
 
 func (h *FloorPlanHandler) UpdateTable(c *fiber.Ctx) error {
-	// Ambil ID meja dari parameter URL
 	tableID, err := c.ParamsInt("table_id")
 	if err != nil {
 		return model.ErrorResponse(c, fiber.StatusBadRequest, "Invalid table ID")
@@ -78,7 +64,6 @@ func (h *FloorPlanHandler) UpdateTable(c *fiber.Ctx) error {
 
 	updatedTable, err := h.FloorPlanService.UpdateTable(uint(tableID), req)
 	if err != nil {
-		// Cek apakah error karena data tidak ditemukan
 		if err.Error() == fmt.Sprintf("table with ID %d not found", tableID) {
 			return model.ErrorResponse(c, fiber.StatusNotFound, err.Error())
 		}
@@ -88,7 +73,6 @@ func (h *FloorPlanHandler) UpdateTable(c *fiber.Ctx) error {
 	return model.SuccessResponse(c, fiber.StatusOK, "Table updated successfully", updatedTable)
 }
 
-// DeleteTable menangani permintaan untuk menghapus meja.
 func (h *FloorPlanHandler) DeleteTable(c *fiber.Ctx) error {
 	tableID, err := c.ParamsInt("table_id")
 	if err != nil {
@@ -103,7 +87,22 @@ func (h *FloorPlanHandler) DeleteTable(c *fiber.Ctx) error {
 		return model.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to delete table")
 	}
 
-	// Untuk DELETE, respons sukses biasanya tidak memiliki data (No Content)
-	// Tapi kita akan kembalikan pesan sukses agar konsisten
 	return model.SuccessResponse(c, fiber.StatusOK, "Table deleted successfully", nil)
+}
+
+func (h *FloorPlanHandler) DeleteFloor(c *fiber.Ctx) error {
+	floorID, err := c.ParamsInt("floor_id")
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusBadRequest, "Invalid floor ID")
+	}
+
+	err = h.FloorPlanService.DeleteFloor(uint(floorID))
+	if err != nil {
+		if err.Error() == fmt.Sprintf("floor with ID %d not found", floorID) {
+			return model.ErrorResponse(c, fiber.StatusNotFound, err.Error())
+		}
+		return model.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return model.SuccessResponse(c, fiber.StatusOK, "Floor and its associated data deleted successfully", nil)
 }

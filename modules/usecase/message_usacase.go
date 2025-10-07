@@ -14,7 +14,6 @@ type MessageUseCase struct {
 	Hub  *websocket.Hub
 }
 
-// SaveAndBroadcastMessage menyimpan pesan dan menyiarkannya.
 func (uc *MessageUseCase) SaveAndBroadcastMessage(req model.SendMessageRequest) (*entity.Message, error) {
 	message := &entity.Message{
 		User:      req.User,
@@ -26,13 +25,11 @@ func (uc *MessageUseCase) SaveAndBroadcastMessage(req model.SendMessageRequest) 
 		return nil, err
 	}
 
-	// Siarkan pesan ke semua klien yang terhubung
 	uc.Hub.Broadcast <- message
 
 	return message, nil
 }
 
-// GetAllMessages mengambil semua pesan.
 func (uc *MessageUseCase) GetAllMessages() ([]entity.Message, error) {
 	return uc.Repo.GetAll()
 }

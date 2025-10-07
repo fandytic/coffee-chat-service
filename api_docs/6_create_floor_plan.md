@@ -1,35 +1,34 @@
-# 6. Create or Update Floor Plan
+# 6. Create Floor Plan
 
-Endpoint ini digunakan untuk mengunggah gambar denah lantai beserta data posisi meja. Jika denah untuk lantai tersebut sudah ada, endpoint ini akan menimpanya. **Endpoint ini terproteksi**.
+Endpoint ini digunakan untuk membuat data denah lantai baru, termasuk posisi meja-mejanya. Endpoint ini menggunakan URL gambar yang didapat dari API Upload Image (`/upload-image`). **Endpoint ini terproteksi**.
 
 - **Endpoint**: `POST /floor-plans`
-- **Content-Type**: `multipart/form-data`
+- **Content-Type**: `application/json`
 - **Authentication**: `Bearer Token`
 
 ---
 
-### Request Body (form-data)
+### Request Body
 
-- **`floor_plan_image`** (file): File gambar denah (e.g., `.jpg`, `.png`).
-- **`floor_number`** (text): Nomor lantai, misalnya `1`.
-- **`tables`** (text): Sebuah string JSON yang berisi array data meja.
-
-**Contoh isi `tables`:**
 ```json
-[
-  {
-    "table_number": "01",
-    "table_name": "Dekat Jendela",
-    "x": 120,
-    "y": 250
-  },
-  {
-    "table_number": "02",
-    "table_name": "Tengah",
-    "x": 350,
-    "y": 250
-  }
-]
+{
+    "floor_number": 1,
+    "image_url": "/public/uploads/1728243900_floor_plan.jpg",
+    "tables": [
+        {
+            "table_number": "01",
+            "table_name": "Dekat Jendela",
+            "x": 120,
+            "y": 250
+        },
+        {
+            "table_number": "02",
+            "table_name": "Tengah",
+            "x": 350,
+            "y": 250
+        }
+    ]
+}
 ```
 
 ---
@@ -39,15 +38,23 @@ Endpoint ini digunakan untuk mengunggah gambar denah lantai beserta data posisi 
 ```sh
 curl --location 'http://localhost:8080/floor-plans' \
 --header 'Authorization: Bearer <TOKEN>' \
---form 'floor_plan_image=@"/path/to/your/floor_plan.jpg"' \
---form 'floor_number="1"' \
---form 'tables="[{\"table_number\":\"01\",\"table_name\":\"Dekat Jendela\",\"x\":120,\"y\":250},{\"table_number\":\"02\",\"table_name\":\"Tengah\",\"x\":350,\"y\":250}]"'
+--header 'Content-Type: application/json' \
+--data '{
+    "floor_number": 1,
+    "image_url": "/public/uploads/1728243900_floor_plan.jpg",
+    "tables": [
+        {
+            "table_number": "01",
+            "table_name": "Dekat Jendela",
+            "x": 120,
+            "y": 250
+        }
+    ]
+}'
 ```
-
 ---
 
 ### Contoh Success Response (Code: 201)
-
 ```json
 {
     "success": true,
@@ -56,18 +63,12 @@ curl --location 'http://localhost:8080/floor-plans' \
     "data": {
         "id": 1,
         "floor_number": 1,
-        "image_url": "/public/uploads/1728243900_floor_plan.jpg",
+        "image_url": "/public/uploads/1759802274_156380C0-A84B-4846-9FDF-9B531BDEBA95.JPG",
         "tables": [
             {
                 "table_number": "01",
                 "table_name": "Dekat Jendela",
                 "x": 120,
-                "y": 250
-            },
-            {
-                "table_number": "02",
-                "table_name": "Tengah",
-                "x": 350,
                 "y": 250
             }
         ]
