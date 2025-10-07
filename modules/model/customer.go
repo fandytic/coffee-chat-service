@@ -18,8 +18,9 @@ type CustomerCheckInResponse struct {
 
 // Model untuk respons daftar customer aktif
 type ActiveCustomerResponse struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	PhotoURL    string `json:"photo_url"`
-	TableNumber string `json:"table_number"`
+	ID                  uint   `json:"id"`
+	Name                string `json:"name"`
+	PhotoURL            string `json:"photo_url"`
+	TableNumber         string `json:"table_number"`
+	UnreadMessagesCount int    `json:"unread_messages_count"`
 }

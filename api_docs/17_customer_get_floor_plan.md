@@ -1,22 +1,25 @@
-# 7. Get Floor Plan by Floor Number
+# 17. Get Customer Floor Plan
 
-Endpoint ini digunakan untuk mengambil detail denah lantai, termasuk URL gambar dan data semua meja di lantai tersebut. **Endpoint ini terproteksi**.
+Endpoint ini digunakan oleh pelanggan untuk mengambil detail denah lantai, termasuk URL gambar dan data semua meja beserta jumlah pelanggan aktif di setiap meja. **Endpoint ini terproteksi** dan memerlukan token otentikasi pelanggan.
 
-- **Endpoint**: `GET /admin/floor-plans/:floor_number`
-- **Authentication**: `Bearer Token`
+- **Endpoint**: `GET /customer/floor-plans/:floor_number`
+- **Authentication**: `Bearer Token` (Customer)
 
 ---
 
 ### Contoh cURL
 
 ```sh
-curl --location 'http://localhost:8080/admin/floor-plans/1' \
---header 'Authorization: Bearer <TOKEN>'
+curl --location 'http://localhost:8080/customer/floor-plans/1' \
+--header 'Authorization: Bearer <CUSTOMER_TOKEN>'
 ```
 
 ---
 
 ### Contoh Success Response (Code: 200)
+
+Responsnya sama persis dengan endpoint admin, memberikan semua data yang dibutuhkan untuk merender denah interaktif di sisi front-end.
+
 ```json
 {
     "success": true,
@@ -42,14 +45,6 @@ curl --location 'http://localhost:8080/admin/floor-plans/1' \
                 "x": 350,
                 "y": 250,
                 "active_users_count": 2
-            },
-            {
-                "table_id": 6,
-                "table_number": "06",
-                "table_name": "Payung Outdoor",
-                "x": 600,
-                "y": 300,
-                "active_users_count": 0
             }
         ]
     }

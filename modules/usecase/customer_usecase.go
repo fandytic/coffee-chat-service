@@ -7,29 +7,30 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
 
 	"coffee-chat-service/modules/entity"
+	interfaces "coffee-chat-service/modules/interface"
 	"coffee-chat-service/modules/model"
 )
 
 type CustomerUseCase struct {
-	DB *gorm.DB
+	CustomerRepo interfaces.CustomerRepositoryInterface
 }
 
 func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.CustomerCheckInResponse, error) {
-	var table entity.Table
-	if err := uc.DB.First(&table, req.TableID).Error; err != nil {
+	tableExists, err := uc.CustomerRepo.CheckTableExists(req.TableID)
+	if err != nil || !tableExists {
 		return nil, errors.New("table not found")
 	}
 
-	customer := entity.Customer{
+	customer := &entity.Customer{
 		Name:     req.Name,
 		PhotoURL: req.PhotoURL,
 		TableID:  req.TableID,
 		Status:   "active",
 	}
-	if err := uc.DB.Create(&customer).Error; err != nil {
+
+	if err := uc.CustomerRepo.CreateCustomer(customer); err != nil {
 		return nil, fmt.Errorf("could not create customer: %w", err)
 	}
 
@@ -56,20 +57,30 @@ func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.Cus
 }
 
 // GetActiveCustomers mengambil semua customer yang berstatus aktif
-func (uc *CustomerUseCase) GetActiveCustomers() ([]model.ActiveCustomerResponse, error) {
-	var customers []entity.Customer
-	err := uc.DB.Preload("Table").Where("status = ?", "active").Find(&customers).Error
+func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) ([]model.ActiveCustomerResponse, error) {
+	customers, err := uc.CustomerRepo.FindAllActiveExcept(loggedInCustomerID)
 	if err != nil {
 		return nil, err
+	}
+
+	unreadCounts, err := uc.CustomerRepo.CountUnreadMessagesFor(loggedInCustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	unreadMap := make(map[uint]int)
+	for _, result := range unreadCounts {
+		unreadMap[result.SenderID] = result.Count
 	}
 
 	response := make([]model.ActiveCustomerResponse, 0, len(customers))
 	for _, cust := range customers {
 		response = append(response, model.ActiveCustomerResponse{
-			ID:          cust.ID,
-			Name:        cust.Name,
-			PhotoURL:    cust.PhotoURL,
-			TableNumber: cust.Table.TableNumber,
+			ID:                  cust.ID,
+			Name:                cust.Name,
+			PhotoURL:            cust.PhotoURL,
+			TableNumber:         cust.Table.TableNumber,
+			UnreadMessagesCount: unreadMap[cust.ID],
 		})
 	}
 

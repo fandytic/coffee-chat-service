@@ -26,15 +26,17 @@ curl --location 'http://localhost:8080/customer/active-list' \
     "data": [
         {
             "id": 1,
-            "name": "Christine Stanley",
-            "photo_url": "",
-            "table_number": "01"
+            "name": "Mary Holmes",
+            "photo_url": "/public/uploads/...",
+            "table_number": "01",
+            "unread_messages_count": 3
         },
         {
-            "id": 2,
-            "name": "Jeremy Gibson",
-            "photo_url": "/public/uploads/1728345999_jeremy.jpg",
-            "table_number": "05"
+            "id": 1,
+            "name": "Mary Holmes",
+            "photo_url": "/public/uploads/...",
+            "table_number": "01",
+            "unread_messages_count": 3
         }
     ]
 }
