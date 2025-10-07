@@ -2,7 +2,7 @@
 
 Endpoint ini digunakan untuk menghapus data denah lantai, semua data meja yang ada di lantai tersebut, dan file gambar denahnya dari server. Operasi ini bersifat permanen dan tidak dapat diurungkan. **Endpoint ini terproteksi**.
 
-- **Endpoint**: `DELETE /floor-plans/:floor_id`
+- **Endpoint**: `DELETE /admin/floor-plans/:floor_id`
 - **Authentication**: `Bearer Token`
 
 ---
@@ -12,7 +12,7 @@ Endpoint ini digunakan untuk menghapus data denah lantai, semua data meja yang a
 Ganti `<FLOOR_ID>` dengan ID lantai yang ingin dihapus (misalnya `1`).
 
 ```sh
-curl --location --request DELETE 'http://localhost:8080/floor-plans/<FLOOR_ID>' \
+curl --location --request DELETE 'http://localhost:8080/admin/floor-plans/<FLOOR_ID>' \
 --header 'Authorization: Bearer <TOKEN>'
 ```
 

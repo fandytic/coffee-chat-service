@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"encoding/json"
+	"log"
 	"time"
 
 	"coffee-chat-service/modules/entity"
@@ -25,7 +27,12 @@ func (uc *MessageUseCase) SaveAndBroadcastMessage(req model.SendMessageRequest) 
 		return nil, err
 	}
 
-	uc.Hub.Broadcast <- message
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		log.Printf("error marshalling broadcast message: %v", err)
+	} else {
+		uc.Hub.Broadcast <- messageBytes
+	}
 
 	return message, nil
 }

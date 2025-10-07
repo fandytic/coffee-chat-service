@@ -2,7 +2,7 @@
 
 Endpoint ini digunakan untuk memperbarui nama dan posisi (koordinat x,y) dari sebuah meja. Anda perlu mengetahui ID unik dari meja yang ingin diubah. **Endpoint ini terproteksi**.
 
-- **Endpoint**: `PUT /tables/:table_id`
+- **Endpoint**: `PUT /admin/tables/:table_id`
 - **Content-Type**: `application/json`
 - **Authentication**: `Bearer Token`
 
@@ -25,7 +25,7 @@ Endpoint ini digunakan untuk memperbarui nama dan posisi (koordinat x,y) dari se
 Ganti `<TABLE_ID>` dengan ID meja yang ingin diubah (misalnya `1`).
 
 ```sh
-curl --location --request PUT 'http://localhost:8080/tables/<TABLE_ID>' \
+curl --location --request PUT 'http://localhost:8080/admin/tables/<TABLE_ID>' \
 --header 'Authorization: Bearer <TOKEN>' \
 --header 'Content-Type: application/json' \
 --data '{

@@ -4,7 +4,7 @@ Endpoint ini digunakan untuk mengirim pesan baru ke dalam chat. Pesan akan disim
 
 > **Catatan**: Idealnya, endpoint ini harus diproteksi dan memerlukan `Authorization: Bearer <token>` di header.
 
-- **Endpoint**: `POST /send`
+- **Endpoint**: `POST /admin/send`
 - **Content-Type**: `application/json`
 
 ---
@@ -23,7 +23,7 @@ Endpoint ini digunakan untuk mengirim pesan baru ke dalam chat. Pesan akan disim
 ### Contoh cURL
 
 ```sh
-curl --location 'http://localhost:8080/send' \
+curl --location 'http://localhost:8080/admin/send' \
 --header 'Content-Type: application/json' \
 --data '{
     "user": "Budi",

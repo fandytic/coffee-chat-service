@@ -18,12 +18,12 @@ import (
 
 func main() {
 	db := config.InitDB()
-	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{}, &entity.Table{})
+	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{}, &entity.Table{}, &entity.Customer{})
 
 	// Seeder untuk membuat admin default jika belum ada
 	createDefaultAdmin(db)
 
-	hub := ws.NewHub()
+	hub := ws.NewHub(db)
 	go hub.Run()
 
 	// Inisialisasi Repositories
@@ -36,6 +36,8 @@ func main() {
 	qrCodeUseCase := &usecase.QRCodeUseCase{}
 	imageUploadUseCase := &usecase.ImageUploadUseCase{}
 	imageUploadHandler := &handler.ImageUploadHandler{ImageUploadService: imageUploadUseCase}
+	customerUseCase := &usecase.CustomerUseCase{DB: db}
+	customerHandler := &handler.CustomerHandler{CustomerService: customerUseCase}
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
@@ -46,7 +48,8 @@ func main() {
 
 	app := fiber.New()
 	app.Static("/public", "./public")
-	router.SetupRoutes(app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler, imageUploadHandler, hub)
+	router.SetupRoutes(app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
+		imageUploadHandler, customerHandler, hub)
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))

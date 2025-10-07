@@ -2,7 +2,7 @@
 
 Endpoint ini digunakan untuk menghapus data meja dari denah. Operasi ini bersifat *soft delete*, artinya data tidak benar-benar hilang dari database tetapi ditandai sebagai telah dihapus. **Endpoint ini terproteksi**.
 
-- **Endpoint**: `DELETE /tables/:table_id`
+- **Endpoint**: `DELETE /admin/tables/:table_id`
 - **Authentication**: `Bearer Token`
 
 ---
@@ -12,7 +12,7 @@ Endpoint ini digunakan untuk menghapus data meja dari denah. Operasi ini bersifa
 Ganti `<TABLE_ID>` dengan ID meja yang ingin dihapus (misalnya `1`).
 
 ```sh
-curl --location --request DELETE 'http://localhost:8080/tables/<TABLE_ID>' \
+curl --location --request DELETE 'http://localhost:8080/admin/tables/<TABLE_ID>' \
 --header 'Authorization: Bearer <TOKEN>'
 ```
 

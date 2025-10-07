@@ -2,7 +2,7 @@
 
 Endpoint ini digunakan untuk membuat gambar QR code dari teks atau URL yang diberikan. **Endpoint ini terproteksi** dan memerlukan otentikasi Bearer Token.
 
-- **Endpoint**: `POST /generate-qr`
+- **Endpoint**: `POST /admin/generate-qr`
 - **Content-Type**: `application/json`
 - **Authentication**: `Bearer Token`
 
@@ -31,7 +31,7 @@ Authorization: Bearer <token_hasil_login>
 Ganti `<TOKEN>` dengan token yang Anda dapatkan dari endpoint `/login`.
 
 ```sh
-curl --location 'http://localhost:8080/generate-qr' \
+curl --location 'http://localhost:8080/admin/generate-qr' \
 --header 'Authorization: Bearer <TOKEN>' \
 --header 'Content-Type: application/json' \
 --data '{
