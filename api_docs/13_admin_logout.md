@@ -4,7 +4,7 @@ Endpoint ini digunakan untuk proses logout admin. **Endpoint ini terproteksi**.
 
 **Alur Kerja Penting**: Setelah memanggil API ini dan mendapatkan respons sukses, **klien (front-end) wajib menghapus Bearer Token** yang tersimpan di *local storage* atau *cookies*.
 
-- **Endpoint**: `POST /logout`
+- **Endpoint**: `POST /admin/logout`
 - **Authentication**: `Bearer Token`
 
 ---
@@ -12,7 +12,7 @@ Endpoint ini digunakan untuk proses logout admin. **Endpoint ini terproteksi**.
 ### Contoh cURL
 
 ```sh
-curl --location --request POST 'http://localhost:8080/logout' \
+curl --location --request POST 'http://localhost:8080/admin/logout' \
 --header 'Authorization: Bearer <TOKEN>'
 ```
 

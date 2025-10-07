@@ -65,6 +65,7 @@ func (uc *FloorPlanUseCase) GetFloorPlanByNumber(floorNumber int) (*model.FloorP
 	tables := make([]model.TableData, 0, len(floor.Tables))
 	for _, t := range floor.Tables {
 		tables = append(tables, model.TableData{
+			ID:          t.ID,
 			TableNumber: t.TableNumber,
 			TableName:   t.TableName,
 			XCoordinate: t.XCoordinate,

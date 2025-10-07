@@ -2,7 +2,7 @@
 
 Endpoint ini digunakan untuk membuat data denah lantai baru, termasuk posisi meja-mejanya. Endpoint ini menggunakan URL gambar yang didapat dari API Upload Image (`/upload-image`). **Endpoint ini terproteksi**.
 
-- **Endpoint**: `POST /floor-plans`
+- **Endpoint**: `POST /admin/floor-plans`
 - **Content-Type**: `application/json`
 - **Authentication**: `Bearer Token`
 
@@ -36,7 +36,7 @@ Endpoint ini digunakan untuk membuat data denah lantai baru, termasuk posisi mej
 ### Contoh cURL
 
 ```sh
-curl --location 'http://localhost:8080/floor-plans' \
+curl --location 'http://localhost:8080/admin/floor-plans' \
 --header 'Authorization: Bearer <TOKEN>' \
 --header 'Content-Type: application/json' \
 --data '{

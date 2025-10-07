@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
@@ -13,30 +12,37 @@ import (
 func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	authHandler *handler.AuthHandler, qrCodeHandler *handler.QRCodeHandler,
 	floorPlanHandler *handler.FloorPlanHandler, imageUploadHandler *handler.ImageUploadHandler,
-	hub *ws.Hub) {
+	customerHandler *handler.CustomerHandler, hub *ws.Hub) {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
 	// Endpoint REST API
 	app.Post("/login", authHandler.Login)
+	app.Post("/check-in", customerHandler.CheckIn)
 	app.Get("/messages", messageHandler.GetMessages)
+
+	app.Post("/upload-image", imageUploadHandler.UploadImage)
 	// Endpoint untuk koneksi WebSocket
 	app.Use("/ws", messageHandler.Upgrade)
-	app.Get("/ws", websocket.New(ws.ServeWs(hub)))
+	app.Get("/ws", func(c *fiber.Ctx) error {
+		return handler.HandleWebSocketConnection(hub, c)
+	})
 
-	protected := app.Group("", middleware.Protected())
-	protected.Post("/logout", authHandler.Logout)
+	adminProtected := app.Group("/admin", middleware.Protected())
+	adminProtected.Post("/logout", authHandler.Logout)
 
-	protected.Post("/send", messageHandler.SendMessage)
-	protected.Post("/generate-qr", qrCodeHandler.GenerateQRCode)
+	adminProtected.Post("/send", messageHandler.SendMessage)
+	adminProtected.Post("/generate-qr", qrCodeHandler.GenerateQRCode)
 
-	protected.Post("/upload-image", imageUploadHandler.UploadImage)
+	adminProtected.Post("/floor-plans", floorPlanHandler.CreateFloorPlan)
+	adminProtected.Get("/floor-plans", floorPlanHandler.GetAllFloors)
+	adminProtected.Delete("/floor-plans/:floor_id", floorPlanHandler.DeleteFloor)
+	adminProtected.Get("/floor-plans/:floor_number", floorPlanHandler.GetFloorPlan)
 
-	protected.Post("/floor-plans", floorPlanHandler.CreateFloorPlan)
-	protected.Get("/floor-plans", floorPlanHandler.GetAllFloors)
-	protected.Delete("/floor-plans/:floor_id", floorPlanHandler.DeleteFloor)
-	protected.Get("/floor-plans/:floor_number", floorPlanHandler.GetFloorPlan)
+	adminProtected.Put("/tables/:table_id", floorPlanHandler.UpdateTable)
+	adminProtected.Delete("/tables/:table_id", floorPlanHandler.DeleteTable)
 
-	protected.Put("/tables/:table_id", floorPlanHandler.UpdateTable)
-	protected.Delete("/tables/:table_id", floorPlanHandler.DeleteTable)
+	customerProtected := app.Group("/customer", middleware.Protected())
+	customerProtected.Get("/active-list", customerHandler.GetActiveCustomers)
+
 }

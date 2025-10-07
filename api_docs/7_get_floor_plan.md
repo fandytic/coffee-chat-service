@@ -2,7 +2,7 @@
 
 Endpoint ini digunakan untuk mengambil detail denah lantai, termasuk URL gambar dan data semua meja di lantai tersebut. **Endpoint ini terproteksi**.
 
-- **Endpoint**: `GET /floor-plans/:floor_number`
+- **Endpoint**: `GET /admin/floor-plans/:floor_number`
 - **Authentication**: `Bearer Token`
 
 ---
@@ -10,7 +10,7 @@ Endpoint ini digunakan untuk mengambil detail denah lantai, termasuk URL gambar 
 ### Contoh cURL
 
 ```sh
-curl --location 'http://localhost:8080/floor-plans/1' \
+curl --location 'http://localhost:8080/admin/floor-plans/1' \
 --header 'Authorization: Bearer <TOKEN>'
 ```
 
@@ -20,17 +20,25 @@ curl --location 'http://localhost:8080/floor-plans/1' \
 ```json
 {
     "success": true,
-    "code": 201,
-    "message": "Floor plan created successfully",
+    "code": 200,
+    "message": "Floor plan retrieved successfully",
     "data": {
         "id": 1,
         "floor_number": 1,
-        "image_url": "/public/uploads/1759802274_156380C0-A84B-4846-9FDF-9B531BDEBA95.JPG",
+        "image_url": "/public/uploads/1728243900_floor_plan.jpg",
         "tables": [
             {
+                "table_id": 1,
                 "table_number": "01",
                 "table_name": "Dekat Jendela",
                 "x": 120,
+                "y": 250
+            },
+            {
+                "table_id": 2,
+                "table_number": "02",
+                "table_name": "Tengah",
+                "x": 350,
                 "y": 250
             }
         ]
