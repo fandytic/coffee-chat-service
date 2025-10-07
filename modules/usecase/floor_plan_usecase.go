@@ -1,91 +1,76 @@
 package usecase
 
 import (
-	"errors"
 	"fmt"
-	"log"
-	"os"
 	"strings"
 
 	"coffee-chat-service/modules/entity"
 	"coffee-chat-service/modules/model"
 
-	// "coffee-chat-service/modules/repository"
-	"gorm.io/gorm"
+	interfaces "coffee-chat-service/modules/interface"
 )
 
 type FloorPlanUseCase struct {
-	DB *gorm.DB
+	FloorPlanRepo interfaces.FloorPlanRepositoryInterface
 }
 
 func (uc *FloorPlanUseCase) CreateFloorPlan(req model.CreateFloorPlanRequest) (*model.FloorPlanResponse, error) {
-	if req.ImageURL == "" {
-		return nil, errors.New("image_url is required")
+	floor := &entity.Floor{
+		FloorNumber: req.FloorNumber,
+		ImageURL:    req.ImageURL,
 	}
 
-	var createdFloor entity.Floor
-	err := uc.DB.Transaction(func(tx *gorm.DB) error {
-		floor := entity.Floor{
-			FloorNumber: req.FloorNumber,
-			ImageURL:    req.ImageURL,
-		}
-		if err := tx.Create(&floor).Error; err != nil {
-			return err
-		}
-
-		for _, td := range req.Tables {
-			table := entity.Table{
-				TableNumber: td.TableNumber,
-				TableName:   td.TableName,
-				XCoordinate: td.XCoordinate,
-				YCoordinate: td.YCoordinate,
-				FloorID:     floor.ID,
-			}
-			if err := tx.Create(&table).Error; err != nil {
-				return err
-			}
-		}
-		createdFloor = floor
-		return nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to save data to database: %w", err)
+	var tables []entity.Table
+	for _, td := range req.Tables {
+		tables = append(tables, entity.Table{
+			TableNumber: td.TableNumber,
+			TableName:   td.TableName,
+			XCoordinate: td.XCoordinate,
+			YCoordinate: td.YCoordinate,
+		})
 	}
 
-	return uc.GetFloorPlanByNumber(createdFloor.FloorNumber)
+	if err := uc.FloorPlanRepo.CreateFloorPlan(floor, tables); err != nil {
+		return nil, err
+	}
+
+	return uc.GetFloorPlanByNumber(req.FloorNumber)
 }
 
 func (uc *FloorPlanUseCase) GetFloorPlanByNumber(floorNumber int) (*model.FloorPlanResponse, error) {
-	var floor entity.Floor
-	if err := uc.DB.Preload("Tables").First(&floor, "floor_number = ?", floorNumber).Error; err != nil {
+	floor, err := uc.FloorPlanRepo.FindFloorByNumber(floorNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	userCounts, err := uc.FloorPlanRepo.CountUsersPerTable()
+	if err != nil {
 		return nil, err
 	}
 
 	tables := make([]model.TableData, 0, len(floor.Tables))
 	for _, t := range floor.Tables {
 		tables = append(tables, model.TableData{
-			ID:          t.ID,
-			TableNumber: t.TableNumber,
-			TableName:   t.TableName,
-			XCoordinate: t.XCoordinate,
-			YCoordinate: t.YCoordinate,
+			ID:               t.ID,
+			TableNumber:      t.TableNumber,
+			TableName:        t.TableName,
+			XCoordinate:      t.XCoordinate,
+			YCoordinate:      t.YCoordinate,
+			ActiveUsersCount: userCounts[t.ID],
 		})
 	}
 
-	response := &model.FloorPlanResponse{
+	return &model.FloorPlanResponse{
 		ID:          floor.ID,
 		FloorNumber: floor.FloorNumber,
 		ImageURL:    floor.ImageURL,
 		Tables:      tables,
-	}
-
-	return response, nil
+	}, nil
 }
 
 func (uc *FloorPlanUseCase) GetAllFloors() ([]model.FloorInfoResponse, error) {
-	var floors []entity.Floor
-	if err := uc.DB.Order("floor_number asc").Find(&floors).Error; err != nil {
+	floors, err := uc.FloorPlanRepo.FindAllFloors()
+	if err != nil {
 		return nil, err
 	}
 
@@ -100,69 +85,24 @@ func (uc *FloorPlanUseCase) GetAllFloors() ([]model.FloorInfoResponse, error) {
 }
 
 func (uc *FloorPlanUseCase) UpdateTable(tableID uint, req model.UpdateTableRequest) (*entity.Table, error) {
-	var table entity.Table
-	if err := uc.DB.First(&table, tableID).Error; err != nil {
-		return nil, fmt.Errorf("table with ID %d not found", tableID)
-	}
-
-	table.TableName = req.TableName
-	table.XCoordinate = req.XCoordinate
-	table.YCoordinate = req.YCoordinate
-
-	if err := uc.DB.Save(&table).Error; err != nil {
-		return nil, err
-	}
-
-	return &table, nil
+	return uc.FloorPlanRepo.UpdateTable(tableID, req)
 }
 
 func (uc *FloorPlanUseCase) DeleteTable(tableID uint) error {
-	result := uc.DB.Delete(&entity.Table{}, tableID)
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("table with ID %d not found", tableID)
-	}
-
-	return nil
+	return uc.FloorPlanRepo.DeleteTable(tableID)
 }
 
 func (uc *FloorPlanUseCase) DeleteFloor(floorID uint) error {
-	var floor entity.Floor
-	if err := uc.DB.First(&floor, floorID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return fmt.Errorf("floor with ID %d not found", floorID)
-		}
-		return err
-	}
-
-	imagePath := strings.TrimPrefix(floor.ImageURL, "/")
-	log.Printf("Attempting to delete image file at path: ./%s", imagePath)
-
-	err := uc.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Unscoped().Where("floor_id = ?", floorID).Delete(&entity.Table{}).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Unscoped().Delete(&entity.Floor{}, floorID).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-
+	// 1. Ambil data lantai berdasarkan ID untuk mendapatkan path gambar
+	floor, err := uc.FloorPlanRepo.FindFloorByID(floorID)
 	if err != nil {
-		return fmt.Errorf("failed to delete floor data from database: %w", err)
+		// Jika tidak ditemukan atau ada error lain, kembalikan error
+		return fmt.Errorf("floor with ID %d not found", floorID)
 	}
 
-	if err := os.Remove(imagePath); err != nil {
-		log.Printf("Warning: could not delete image file %s: %v", imagePath, err)
-	} else {
-		log.Printf("Successfully deleted image file: %s", imagePath)
-	}
+	// 2. Siapkan path file untuk dihapus
+	imagePath := strings.TrimPrefix(floor.ImageURL, "/")
 
-	return nil
+	// 3. Panggil repository untuk menghapus data dari DB dan file dari server
+	return uc.FloorPlanRepo.DeleteFloorAndTables(floorID, imagePath)
 }

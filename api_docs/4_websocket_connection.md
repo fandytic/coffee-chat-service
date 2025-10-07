@@ -16,15 +16,14 @@ Untuk terhubung, klien harus menyediakan token otentikasi pelanggan (didapat dar
 
 ### 2. Mengirim Pesan (Client -> Server)
 
-Untuk mengirim pesan ke pelanggan lain, klien harus mengirim pesan dalam format JSON dengan struktur sebagai berikut:
+Untuk mengirim pesan, klien mengirimkan format JSON berikut. Untuk membalas pesan, sertakan `reply_to_message_id`.
 
 - **Struktur Pesan:**
-  - `recipient_id` (integer): ID unik dari pelanggan yang akan menerima pesan.
-  - `text` (string): Isi pesan yang ingin dikirim.
+  - `recipient_id` (integer): ID pelanggan tujuan.
+  - `text` (string): Isi pesan.
+  - `reply_to_message_id` (integer, opsional): ID dari pesan yang ingin dibalas.
 
-**Contoh JSON yang Dikirim:**
-Misalnya, Anda (dengan ID 1) ingin mengirim pesan ke "Christine" (dengan ID 5):
-
+**Contoh Mengirim Pesan Biasa:**
 ```json
 {
     "recipient_id": 5,
@@ -32,29 +31,61 @@ Misalnya, Anda (dengan ID 1) ingin mengirim pesan ke "Christine" (dengan ID 5):
 }
 ```
 
----
-
-### 3. Menerima Pesan (Server -> Client)
-
-Ketika seseorang mengirimi Anda pesan, server akan meneruskan pesan tersebut dalam format JSON dengan struktur yang kaya akan informasi pengirim:
-
-- **Struktur Pesan:**
-  - `sender_id` (integer): ID unik dari pelanggan yang mengirim pesan.
-  - `sender_name` (string): Nama pengirim.
-  - `sender_photo_url` (string): URL foto profil pengirim.
-  - `sender_table_number` (string): Nomor meja tempat pengirim berada.
-  - `text` (string): Isi pesan yang diterima.
-
-**Contoh JSON yang Diterima:**
-Jika "Christine" (ID 5, di meja "01") membalas pesan Anda:
-
+**Contoh Membalas Pesan (yang memiliki ID 123):**
 ```json
 {
+    "recipient_id": 5,
+    "text": "Haha mirip dikit",
+    "reply_to_message_id": 123
+}
+```
+
+---
+### 3. Menerima Pesan (Server -> Client)
+
+Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
+
+- **Struktur Pesan:**
+  - `message_id` (integer): ID unik dari pesan ini.
+  - `sender_id` (integer): ID pengirim.
+  - `sender_name` (string): Nama pengirim.
+  - `sender_photo_url` (string): URL foto pengirim.
+  - `sender_table_number` (string): Nomor meja pengirim.
+  - `text` (string): Isi pesan.
+  - `timestamp` (string): Waktu pesan dibuat (format ISO 8601).
+  - `reply_to` (objek, opsional): Berisi detail pesan yang dibalas.
+    - `id` (integer): ID pesan asli.
+    - `text` (string): Teks pesan asli.
+    - `sender_name` (string): Nama pengirim pesan asli.
+
+**Contoh Menerima Pesan Biasa:**
+```json
+{
+    "message_id": 124,
     "sender_id": 5,
-    "sender_name": "Christine Stanley",
-    "sender_photo_url": "/public/uploads/12345_christine.jpg",
+    "sender_name": "Christine",
+    "sender_photo_url": "/public/uploads/...",
     "sender_table_number": "01",
-    "text": "Iya, salam kenal :)"
+    "text": "gw Christine",
+    "timestamp": "2025-10-07T20:00:00Z"
+}
+```
+
+**Contoh Menerima Pesan Balasan:**
+```json
+{
+    "message_id": 125,
+    "sender_id": 2,
+    "sender_name": "Edward",
+    "sender_photo_url": "/public/uploads/...",
+    "sender_table_number": "05",
+    "text": "Haha mirip dikit",
+    "timestamp": "2025-10-07T20:02:00Z",
+    "reply_to": {
+        "id": 123,
+        "text": "Edward Cullen? haha",
+        "sender_name": "Christine"
+    }
 }
 ```
 Front-end kemudian dapat menggunakan `sender_id` untuk menampilkan nama dan foto pengirim yang sesuai dari daftar pelanggan aktif.

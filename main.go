@@ -18,7 +18,8 @@ import (
 
 func main() {
 	db := config.InitDB()
-	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{}, &entity.Table{}, &entity.Customer{})
+	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{},
+		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{})
 
 	// Seeder untuk membuat admin default jika belum ada
 	createDefaultAdmin(db)
@@ -29,27 +30,35 @@ func main() {
 	// Inisialisasi Repositories
 	messageRepo := repository.NewMessageRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
+	customerRepo := repository.NewCustomerRepository(db)
+	chatRepo := repository.NewChatRepository(db)
+	floorPlanRepo := repository.NewFloorPlanRepository(db)
+	dashboardRepo := repository.NewDashboardRepository(db)
 
 	// Inisialisasi Use Cases
 	messageUseCase := &usecase.MessageUseCase{Repo: messageRepo, Hub: hub}
 	authUseCase := &usecase.AuthUseCase{AdminRepo: adminRepo}
 	qrCodeUseCase := &usecase.QRCodeUseCase{}
+	floorPlanUseCase := &usecase.FloorPlanUseCase{FloorPlanRepo: floorPlanRepo}
 	imageUploadUseCase := &usecase.ImageUploadUseCase{}
-	imageUploadHandler := &handler.ImageUploadHandler{ImageUploadService: imageUploadUseCase}
-	customerUseCase := &usecase.CustomerUseCase{DB: db}
-	customerHandler := &handler.CustomerHandler{CustomerService: customerUseCase}
+	customerUseCase := &usecase.CustomerUseCase{CustomerRepo: customerRepo}
+	dashboardUseCase := &usecase.DashboardUseCase{DashboardRepo: dashboardRepo}
+	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
 	authHandler := &handler.AuthHandler{AuthService: authUseCase}
 	qrCodeHandler := &handler.QRCodeHandler{QRCodeService: qrCodeUseCase}
-	floorPlanUseCase := &usecase.FloorPlanUseCase{DB: db}
 	floorPlanHandler := &handler.FloorPlanHandler{FloorPlanService: floorPlanUseCase}
+	imageUploadHandler := &handler.ImageUploadHandler{ImageUploadService: imageUploadUseCase}
+	customerHandler := &handler.CustomerHandler{CustomerService: customerUseCase}
+	dashboardHandler := &handler.DashboardHandler{DashboardService: dashboardUseCase}
+	chatHandler := &handler.ChatHandler{ChatService: chatUseCase}
 
 	app := fiber.New()
 	app.Static("/public", "./public")
 	router.SetupRoutes(app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
-		imageUploadHandler, customerHandler, hub)
+		imageUploadHandler, customerHandler, dashboardHandler, chatHandler, hub)
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))
