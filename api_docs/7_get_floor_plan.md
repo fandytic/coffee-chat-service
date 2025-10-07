@@ -17,5 +17,23 @@ curl --location 'http://localhost:8080/floor-plans/1' \
 ---
 
 ### Contoh Success Response (Code: 200)
-
-Sama seperti respons saat membuat denah baru.
+```json
+{
+    "success": true,
+    "code": 201,
+    "message": "Floor plan created successfully",
+    "data": {
+        "id": 1,
+        "floor_number": 1,
+        "image_url": "/public/uploads/1759802274_156380C0-A84B-4846-9FDF-9B531BDEBA95.JPG",
+        "tables": [
+            {
+                "table_number": "01",
+                "table_name": "Dekat Jendela",
+                "x": 120,
+                "y": 250
+            }
+        ]
+    }
+}
+```

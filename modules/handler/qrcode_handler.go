@@ -27,7 +27,6 @@ func (h *QRCodeHandler) GenerateQRCode(c *fiber.Ctx) error {
 		return model.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to generate QR code")
 	}
 
-	// Set header content type ke image/png dan kirim byte gambar
 	c.Set("Content-Type", "image/png")
 	return c.Send(pngBytes)
 }

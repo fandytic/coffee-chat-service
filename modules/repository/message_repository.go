@@ -14,12 +14,10 @@ func NewMessageRepository(db *gorm.DB) *MessageRepository {
 	return &MessageRepository{db: db}
 }
 
-// Create menyimpan pesan baru ke database.
 func (r *MessageRepository) Create(message *entity.Message) error {
 	return r.db.Create(message).Error
 }
 
-// GetAll mengambil semua pesan dari database.
 func (r *MessageRepository) GetAll() ([]entity.Message, error) {
 	var messages []entity.Message
 	err := r.db.Order("timestamp asc").Find(&messages).Error
