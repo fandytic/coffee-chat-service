@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	"coffee-chat-service/modules/model"
-
 	"github.com/skip2/go-qrcode"
+
+	"coffee-chat-service/modules/model"
 )
 
 type QRCodeUseCase struct{}

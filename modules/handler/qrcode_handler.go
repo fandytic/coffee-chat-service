@@ -1,10 +1,10 @@
 package handler
 
 import (
+	"github.com/gofiber/fiber/v2"
+
 	interfaces "coffee-chat-service/modules/interface"
 	"coffee-chat-service/modules/model"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 type QRCodeHandler struct {

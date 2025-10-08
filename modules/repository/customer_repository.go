@@ -1,10 +1,10 @@
 package repository
 
 import (
+	"gorm.io/gorm"
+
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
-
-	"gorm.io/gorm"
 )
 
 type CustomerRepository struct {
@@ -15,7 +15,6 @@ func NewCustomerRepository(db *gorm.DB) *CustomerRepository {
 	return &CustomerRepository{DB: db}
 }
 
-// FindAllActiveExcept mengambil semua customer aktif KECUALI diri sendiri.
 func (r *CustomerRepository) FindAllActiveExcept(customerID uint) ([]entity.Customer, error) {
 	var customers []entity.Customer
 	err := r.DB.Preload("Table").
@@ -24,7 +23,6 @@ func (r *CustomerRepository) FindAllActiveExcept(customerID uint) ([]entity.Cust
 	return customers, err
 }
 
-// CountUnreadMessagesFor menghitung pesan belum dibaca yang ditujukan ke user tertentu.
 func (r *CustomerRepository) CountUnreadMessagesFor(recipientID uint) ([]interfaces.UnreadResult, error) {
 	var unreadCounts []interfaces.UnreadResult
 	err := r.DB.Model(&entity.ChatMessage{}).
@@ -43,4 +41,14 @@ func (r *CustomerRepository) CheckTableExists(tableID uint) (bool, error) {
 
 func (r *CustomerRepository) CreateCustomer(customer *entity.Customer) error {
 	return r.DB.Create(customer).Error
+}
+
+func (r *CustomerRepository) FindAll(search string) ([]entity.Customer, error) {
+	var customers []entity.Customer
+	query := r.DB.Preload("Table").Order("updated_at desc")
+	if search != "" {
+		query = query.Where("name ILIKE ?", "%"+search+"%")
+	}
+	err := query.Find(&customers).Error
+	return customers, err
 }

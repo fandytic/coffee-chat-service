@@ -1,18 +1,17 @@
 package handler
 
 import (
-	"coffee-chat-service/modules/model"
-	"coffee-chat-service/modules/usecase" // Ganti dengan interface nanti
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+
+	"coffee-chat-service/modules/model"
+	"coffee-chat-service/modules/usecase"
 )
 
 type ChatHandler struct {
-	ChatService *usecase.ChatUseCase // Ganti dengan interface nanti
+	ChatService *usecase.ChatUseCase
 }
 
-// MarkMessagesAsRead menangani permintaan untuk menandai pesan sebagai telah dibaca
 func (h *ChatHandler) MarkMessagesAsRead(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)

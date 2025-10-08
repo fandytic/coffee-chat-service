@@ -1,8 +1,9 @@
 package interfaces
 
 import (
-	"coffee-chat-service/modules/model"
 	"mime/multipart"
+
+	"coffee-chat-service/modules/model"
 )
 
 type FloorPlanServiceInterface interface {

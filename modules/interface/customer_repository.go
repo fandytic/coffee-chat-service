@@ -10,6 +10,7 @@ type UnreadResult struct {
 type CustomerRepositoryInterface interface {
 	FindAllActiveExcept(customerID uint) ([]entity.Customer, error)
 	CountUnreadMessagesFor(recipientID uint) ([]UnreadResult, error)
-	CheckTableExists(tableID uint) (bool, error)    // <-- TAMBAHKAN INI
-	CreateCustomer(customer *entity.Customer) error // <-- TAMBAHKAN INI
+	CheckTableExists(tableID uint) (bool, error)
+	CreateCustomer(customer *entity.Customer) error
+	FindAll(search string) ([]entity.Customer, error)
 }

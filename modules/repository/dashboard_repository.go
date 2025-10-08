@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"coffee-chat-service/modules/entity"
-
 	"gorm.io/gorm"
+
+	"coffee-chat-service/modules/entity"
 )
 
 type DashboardRepository struct {
