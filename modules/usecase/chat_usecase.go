@@ -5,10 +5,9 @@ import (
 )
 
 type ChatUseCase struct {
-	ChatRepo interfaces.ChatRepositoryInterface // <-- Gunakan interface
+	ChatRepo interfaces.ChatRepositoryInterface
 }
 
-// MarkMessagesAsRead sekarang hanya memanggil repository
 func (uc *ChatUseCase) MarkMessagesAsRead(senderID, recipientID uint) error {
 	return uc.ChatRepo.MarkMessagesAsRead(senderID, recipientID)
 }

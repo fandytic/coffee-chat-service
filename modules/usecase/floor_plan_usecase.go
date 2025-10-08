@@ -5,9 +5,8 @@ import (
 	"strings"
 
 	"coffee-chat-service/modules/entity"
-	"coffee-chat-service/modules/model"
-
 	interfaces "coffee-chat-service/modules/interface"
+	"coffee-chat-service/modules/model"
 )
 
 type FloorPlanUseCase struct {
@@ -93,16 +92,12 @@ func (uc *FloorPlanUseCase) DeleteTable(tableID uint) error {
 }
 
 func (uc *FloorPlanUseCase) DeleteFloor(floorID uint) error {
-	// 1. Ambil data lantai berdasarkan ID untuk mendapatkan path gambar
 	floor, err := uc.FloorPlanRepo.FindFloorByID(floorID)
 	if err != nil {
-		// Jika tidak ditemukan atau ada error lain, kembalikan error
 		return fmt.Errorf("floor with ID %d not found", floorID)
 	}
 
-	// 2. Siapkan path file untuk dihapus
 	imagePath := strings.TrimPrefix(floor.ImageURL, "/")
 
-	// 3. Panggil repository untuk menghapus data dari DB dan file dari server
 	return uc.FloorPlanRepo.DeleteFloorAndTables(floorID, imagePath)
 }

@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
+	"gorm.io/gorm"
+
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
 	"coffee-chat-service/modules/model"
-
-	"gorm.io/gorm"
 )
 
 type FloorPlanRepository struct {

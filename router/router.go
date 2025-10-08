@@ -13,7 +13,7 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	authHandler *handler.AuthHandler, qrCodeHandler *handler.QRCodeHandler,
 	floorPlanHandler *handler.FloorPlanHandler, imageUploadHandler *handler.ImageUploadHandler,
 	customerHandler *handler.CustomerHandler, dashboardHandler *handler.DashboardHandler,
-	chatHandler *handler.ChatHandler, hub *ws.Hub) {
+	chatHandler *handler.ChatHandler, menuHandler *handler.MenuHandler, hub *ws.Hub) {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
@@ -44,6 +44,14 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	adminProtected.Delete("/tables/:table_id", floorPlanHandler.DeleteTable)
 
 	adminProtected.Get("/dashboard/stats", dashboardHandler.GetStats)
+
+	adminProtected.Post("/menus", menuHandler.CreateMenu)
+	adminProtected.Get("/menus", menuHandler.GetAllMenus)
+	adminProtected.Get("/menus/:id", menuHandler.GetMenuByID)
+	adminProtected.Put("/menus/:id", menuHandler.UpdateMenu)
+	adminProtected.Delete("/menus/:id", menuHandler.DeleteMenu)
+
+	adminProtected.Get("/customers", customerHandler.GetAllCustomers)
 
 	customerProtected := app.Group("/customer", middleware.Protected())
 	customerProtected.Get("/active-list", customerHandler.GetActiveCustomers)

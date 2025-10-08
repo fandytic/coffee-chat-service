@@ -56,7 +56,6 @@ func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.Cus
 	}, nil
 }
 
-// GetActiveCustomers mengambil semua customer yang berstatus aktif
 func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) ([]model.ActiveCustomerResponse, error) {
 	customers, err := uc.CustomerRepo.FindAllActiveExcept(loggedInCustomerID)
 	if err != nil {
@@ -81,6 +80,32 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) ([]model.
 			PhotoURL:            cust.PhotoURL,
 			TableNumber:         cust.Table.TableNumber,
 			UnreadMessagesCount: unreadMap[cust.ID],
+		})
+	}
+
+	return response, nil
+}
+
+func (uc *CustomerUseCase) GetAllCustomers(search string) ([]model.AllCustomersResponse, error) {
+	customers, err := uc.CustomerRepo.FindAll(search)
+	if err != nil {
+		return nil, err
+	}
+
+	response := make([]model.AllCustomersResponse, 0, len(customers))
+	for _, cust := range customers {
+		tableNumber := ""
+		if cust.Table.TableNumber != "" {
+			tableNumber = cust.Table.TableNumber
+		}
+
+		response = append(response, model.AllCustomersResponse{
+			ID:          cust.ID,
+			Name:        cust.Name,
+			PhotoURL:    cust.PhotoURL,
+			TableNumber: tableNumber,
+			Status:      cust.Status,
+			LastLogin:   cust.UpdatedAt,
 		})
 	}
 

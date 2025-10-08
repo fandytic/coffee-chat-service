@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"coffee-chat-service/modules/model"
-	"coffee-chat-service/modules/usecase"
 	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+
+	"coffee-chat-service/modules/model"
+	"coffee-chat-service/modules/usecase"
 )
 
 type FloorPlanHandler struct {

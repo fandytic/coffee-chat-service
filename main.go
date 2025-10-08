@@ -19,7 +19,7 @@ import (
 func main() {
 	db := config.InitDB()
 	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{},
-		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{})
+		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{}, &entity.Menu{})
 
 	// Seeder untuk membuat admin default jika belum ada
 	createDefaultAdmin(db)
@@ -34,6 +34,7 @@ func main() {
 	chatRepo := repository.NewChatRepository(db)
 	floorPlanRepo := repository.NewFloorPlanRepository(db)
 	dashboardRepo := repository.NewDashboardRepository(db)
+	menuRepo := repository.NewMenuRepository(db)
 
 	// Inisialisasi Use Cases
 	messageUseCase := &usecase.MessageUseCase{Repo: messageRepo, Hub: hub}
@@ -44,6 +45,7 @@ func main() {
 	customerUseCase := &usecase.CustomerUseCase{CustomerRepo: customerRepo}
 	dashboardUseCase := &usecase.DashboardUseCase{DashboardRepo: dashboardRepo}
 	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}
+	menuUseCase := &usecase.MenuUseCase{MenuRepo: menuRepo}
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
@@ -54,11 +56,12 @@ func main() {
 	customerHandler := &handler.CustomerHandler{CustomerService: customerUseCase}
 	dashboardHandler := &handler.DashboardHandler{DashboardService: dashboardUseCase}
 	chatHandler := &handler.ChatHandler{ChatService: chatUseCase}
+	menuHandler := &handler.MenuHandler{MenuService: menuUseCase}
 
 	app := fiber.New()
 	app.Static("/public", "./public")
 	router.SetupRoutes(app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
-		imageUploadHandler, customerHandler, dashboardHandler, chatHandler, hub)
+		imageUploadHandler, customerHandler, dashboardHandler, chatHandler, menuHandler, hub)
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))

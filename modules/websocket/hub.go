@@ -5,18 +5,16 @@ import (
 	"log"
 	"time"
 
-	"coffee-chat-service/modules/entity"
-
 	"gorm.io/gorm"
+
+	"coffee-chat-service/modules/entity"
 )
 
-// Message struct untuk komunikasi internal di Hub
 type DirectMessage struct {
 	SenderID uint
 	Message  []byte
 }
 
-// Payload JSON yang dikirim antar klien
 type MessagePayload struct {
 	RecipientID      uint   `json:"recipient_id"`
 	Text             string `json:"text"`
@@ -78,14 +76,12 @@ func (h *Hub) Run() {
 			}
 
 		case directMsg := <-h.incoming:
-			// 1. Unmarshal pesan dari klien
 			var payload MessagePayload
 			if err := json.Unmarshal(directMsg.Message, &payload); err != nil {
 				log.Printf("Error unmarshalling message: %v", err)
 				continue
 			}
 
-			// 2. Simpan pesan ke database
 			chatMessage := entity.ChatMessage{
 				SenderID:         directMsg.SenderID,
 				RecipientID:      payload.RecipientID,
@@ -97,17 +93,14 @@ func (h *Hub) Run() {
 				continue
 			}
 
-			// 3. Ambil detail pengirim untuk payload balasan
 			var sender entity.Customer
 			if err := h.DB.Preload("Table").First(&sender, directMsg.SenderID).Error; err != nil {
-				continue // Abaikan jika pengirim tidak ditemukan
+				continue
 			}
 
-			// 4. (Opsional) Jika ini adalah balasan, ambil info pesan asli
 			var repliedToInfo *RepliedMessageInfo
 			if chatMessage.ReplyToMessageID != nil {
 				var originalMsg entity.ChatMessage
-				// Preload("Sender") untuk mendapatkan nama pengirim asli
 				if err := h.DB.Preload("Sender").First(&originalMsg, *chatMessage.ReplyToMessageID).Error; err == nil {
 					repliedToInfo = &RepliedMessageInfo{
 						ID:         originalMsg.ID,
@@ -117,9 +110,7 @@ func (h *Hub) Run() {
 				}
 			}
 
-			// 5. Cari koneksi penerima
 			if recipient, ok := h.customers[payload.RecipientID]; ok {
-				// 6. Buat payload lengkap untuk dikirim ke penerima
 				responsePayload := IncomingMessagePayload{
 					MessageID:         chatMessage.ID,
 					SenderID:          sender.ID,
@@ -132,7 +123,6 @@ func (h *Hub) Run() {
 				}
 				responseJSON, _ := json.Marshal(responsePayload)
 
-				// 7. Kirim ke penerima
 				recipient.send <- responseJSON
 			} else {
 				log.Printf("Recipient not found or offline: CustomerID %d", payload.RecipientID)

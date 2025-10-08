@@ -3,10 +3,10 @@ package middleware
 import (
 	"os"
 
-	"coffee-chat-service/modules/model"
-
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
+
+	"coffee-chat-service/modules/model"
 )
 
 func Protected() fiber.Handler {
