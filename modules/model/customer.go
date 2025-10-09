@@ -16,12 +16,23 @@ type CustomerCheckInResponse struct {
 	AuthToken string `json:"auth_token"`
 }
 
+type LastMessage struct {
+	Text      string    `json:"text"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
 type ActiveCustomerResponse struct {
-	ID                  uint   `json:"id"`
-	Name                string `json:"name"`
-	PhotoURL            string `json:"photo_url"`
-	TableNumber         string `json:"table_number"`
-	UnreadMessagesCount int    `json:"unread_messages_count"`
+	ID                  uint         `json:"id"`
+	Name                string       `json:"name"`
+	PhotoURL            string       `json:"photo_url"`
+	TableNumber         string       `json:"table_number"`
+	UnreadMessagesCount int          `json:"unread_messages_count"`
+	LastMessage         *LastMessage `json:"last_message,omitempty"` // <-- TAMBAHKAN INI
+}
+
+type PaginatedActiveCustomersResponse struct {
+	Total     int                      `json:"total"`
+	Customers []ActiveCustomerResponse `json:"customers"`
 }
 
 type AllCustomersResponse struct {

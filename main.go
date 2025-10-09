@@ -42,7 +42,10 @@ func main() {
 	qrCodeUseCase := &usecase.QRCodeUseCase{}
 	floorPlanUseCase := &usecase.FloorPlanUseCase{FloorPlanRepo: floorPlanRepo}
 	imageUploadUseCase := &usecase.ImageUploadUseCase{}
-	customerUseCase := &usecase.CustomerUseCase{CustomerRepo: customerRepo}
+	customerUseCase := &usecase.CustomerUseCase{
+		CustomerRepo: customerRepo,
+		ChatRepo:     chatRepo,
+	}
 	dashboardUseCase := &usecase.DashboardUseCase{DashboardRepo: dashboardRepo}
 	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}
 	menuUseCase := &usecase.MenuUseCase{MenuRepo: menuRepo}
