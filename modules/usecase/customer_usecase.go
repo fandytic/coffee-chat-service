@@ -15,6 +15,7 @@ import (
 
 type CustomerUseCase struct {
 	CustomerRepo interfaces.CustomerRepositoryInterface
+	ChatRepo     interfaces.ChatRepositoryInterface
 }
 
 func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.CustomerCheckInResponse, error) {
@@ -56,7 +57,7 @@ func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.Cus
 	}, nil
 }
 
-func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) ([]model.ActiveCustomerResponse, error) {
+func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) (*model.PaginatedActiveCustomersResponse, error) {
 	customers, err := uc.CustomerRepo.FindAllActiveExcept(loggedInCustomerID)
 	if err != nil {
 		return nil, err
@@ -66,24 +67,42 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) ([]model.
 	if err != nil {
 		return nil, err
 	}
-
 	unreadMap := make(map[uint]int)
 	for _, result := range unreadCounts {
 		unreadMap[result.SenderID] = result.Count
 	}
 
-	response := make([]model.ActiveCustomerResponse, 0, len(customers))
+	lastMessages, err := uc.ChatRepo.FindLastMessages(loggedInCustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	customerResponses := make([]model.ActiveCustomerResponse, 0, len(customers))
 	for _, cust := range customers {
-		response = append(response, model.ActiveCustomerResponse{
+		var lastMsg *model.LastMessage
+		if msg, ok := lastMessages[cust.ID]; ok {
+			lastMsg = &model.LastMessage{
+				Text:      msg.Text,
+				Timestamp: msg.CreatedAt,
+			}
+		}
+
+		customerResponses = append(customerResponses, model.ActiveCustomerResponse{
 			ID:                  cust.ID,
 			Name:                cust.Name,
 			PhotoURL:            cust.PhotoURL,
 			TableNumber:         cust.Table.TableNumber,
 			UnreadMessagesCount: unreadMap[cust.ID],
+			LastMessage:         lastMsg,
 		})
 	}
 
-	return response, nil
+	finalResponse := &model.PaginatedActiveCustomersResponse{
+		Total:     len(customers),
+		Customers: customerResponses,
+	}
+
+	return finalResponse, nil
 }
 
 func (uc *CustomerUseCase) GetAllCustomers(search string) ([]model.AllCustomersResponse, error) {
