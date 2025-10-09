@@ -58,5 +58,6 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	customerProtected.Get("/stats", dashboardHandler.GetStats)
 	customerProtected.Get("/floor-plans/:floor_number", floorPlanHandler.GetFloorPlan)
 	customerProtected.Post("/chats/:sender_id/mark-as-read", chatHandler.MarkMessagesAsRead)
+	customerProtected.Get("/menus", menuHandler.GetAllMenus)
 
 }
