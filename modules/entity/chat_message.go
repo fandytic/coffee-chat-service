@@ -11,7 +11,9 @@ type ChatMessage struct {
 	Text             string
 	ReplyToMessageID *uint
 	IsRead           bool `gorm:"default:false;not null"`
+	MenuID           *uint
 
 	Sender    Customer `gorm:"foreignKey:SenderID"`
 	Recipient Customer `gorm:"foreignKey:RecipientID"`
+	Menu      *Menu
 }
