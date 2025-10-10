@@ -10,7 +10,8 @@ type Client struct {
 	hub        *Hub
 	conn       *websocket.Conn
 	send       chan []byte
-	CustomerID uint
+	CustomerID uint // Akan 0 jika ini adalah admin
+	AdminID    uint // Akan 0 jika ini adalah customer
 }
 
 func (c *Client) writePump() {
@@ -52,5 +53,30 @@ func ServeWs(hub *Hub, customerID uint) func(*websocket.Conn) {
 
 		go client.writePump()
 		client.readPump()
+	}
+}
+
+func ServeCustomerWs(hub *Hub, customerID uint) func(*websocket.Conn) {
+	return func(conn *websocket.Conn) {
+		client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), CustomerID: customerID}
+		client.hub.register <- client
+		go client.writePump()
+		client.readPump()
+	}
+}
+
+func ServeAdminWs(hub *Hub, adminID uint) func(*websocket.Conn) {
+	return func(conn *websocket.Conn) {
+		client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), AdminID: adminID}
+		client.hub.register <- client
+		go client.writePump()
+
+		defer conn.Close()
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				client.hub.unregister <- client
+				break
+			}
+		}
 	}
 }

@@ -29,11 +29,17 @@ func HandleWebSocketConnection(hub *ws.Hub, c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid token")
 	}
 
-	customerIDFloat, ok := claims["customer_id"].(float64)
-	if !ok {
-		return c.Status(fiber.StatusBadRequest).SendString("Invalid customer_id in token")
-	}
-	customerID := uint(customerIDFloat)
+	if adminIDFloat, ok := claims["user_id"].(float64); ok {
+		adminID := uint(adminIDFloat)
 
-	return websocket.New(ws.ServeWs(hub, customerID))(c)
+		return websocket.New(ws.ServeAdminWs(hub, adminID))(c)
+	}
+
+	if customerIDFloat, ok := claims["customer_id"].(float64); ok {
+		customerID := uint(customerIDFloat)
+
+		return websocket.New(ws.ServeCustomerWs(hub, customerID))(c)
+	}
+
+	return c.Status(fiber.StatusBadRequest).SendString("Invalid token type for WebSocket")
 }

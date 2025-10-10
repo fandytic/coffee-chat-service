@@ -51,3 +51,12 @@ func (r *ChatRepository) FindLastMessages(userID uint) (map[uint]*entity.ChatMes
 
 	return lastMessagesMap, nil
 }
+
+func (r *ChatRepository) GetMessageHistory(user1ID, user2ID uint) ([]entity.ChatMessage, error) {
+	var messages []entity.ChatMessage
+	err := r.DB.Where("(sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)",
+		user1ID, user2ID, user2ID, user1ID).
+		Order("created_at asc").
+		Find(&messages).Error
+	return messages, err
+}

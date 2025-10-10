@@ -13,7 +13,8 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	authHandler *handler.AuthHandler, qrCodeHandler *handler.QRCodeHandler,
 	floorPlanHandler *handler.FloorPlanHandler, imageUploadHandler *handler.ImageUploadHandler,
 	customerHandler *handler.CustomerHandler, dashboardHandler *handler.DashboardHandler,
-	chatHandler *handler.ChatHandler, menuHandler *handler.MenuHandler, hub *ws.Hub) {
+	chatHandler *handler.ChatHandler, menuHandler *handler.MenuHandler, orderHandler *handler.OrderHandler,
+	hub *ws.Hub) {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
@@ -51,13 +52,19 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	adminProtected.Put("/menus/:id", menuHandler.UpdateMenu)
 	adminProtected.Delete("/menus/:id", menuHandler.DeleteMenu)
 
+	adminProtected.Get("/orders", orderHandler.GetAllOrders)
+
 	adminProtected.Get("/customers", customerHandler.GetAllCustomers)
 
 	customerProtected := app.Group("/customer", middleware.Protected())
 	customerProtected.Get("/active-list", customerHandler.GetActiveCustomers)
 	customerProtected.Get("/stats", dashboardHandler.GetStats)
 	customerProtected.Get("/floor-plans/:floor_number", floorPlanHandler.GetFloorPlan)
+
 	customerProtected.Post("/chats/:sender_id/mark-as-read", chatHandler.MarkMessagesAsRead)
+	customerProtected.Get("/chats/:id", chatHandler.GetMessageHistory)
+
 	customerProtected.Get("/menus", menuHandler.GetAllMenus)
+	customerProtected.Post("/orders", orderHandler.CreateOrder)
 
 }

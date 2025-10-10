@@ -22,12 +22,14 @@ Untuk mengirim pesan, klien mengirimkan format JSON berikut. Untuk membalas pesa
   - `recipient_id` (integer): ID pelanggan tujuan.
   - `text` (string): Isi pesan.
   - `reply_to_message_id` (integer, opsional): ID dari pesan yang ingin dibalas.
+  - `menu_id` (integer, opsional): Sertakan ID menu jika ini adalah permintaan "traktir".
 
 **Contoh Mengirim Pesan Biasa:**
 ```json
 {
     "recipient_id": 5,
-    "text": "Halo, salam kenal juga!"
+    "text": "Halo, salam kenal juga!",
+    "menu_id": 1
 }
 ```
 
@@ -57,6 +59,11 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     - `id` (integer): ID pesan asli.
     - `text` (string): Teks pesan asli.
     - `sender_name` (string): Nama pengirim pesan asli.
+  - `menu` (objek, opsional): Berisi detail menu jika ini adalah pesan traktir.
+    - `id` (integer): ID menu.
+    - `name` (string): Nama menu.
+    - `price` (float): Harga menu.
+    - `image_url` (string): URL gambar menu.
 
 **Contoh Menerima Pesan Biasa:**
 ```json
@@ -67,7 +74,13 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     "sender_photo_url": "/public/uploads/...",
     "sender_table_number": "01",
     "text": "gw Christine",
-    "timestamp": "2025-10-07T20:00:00Z"
+    "timestamp": "2025-10-07T20:00:00Z",
+    "menu": {
+        "id": 1,
+        "name": "French Fries",
+        "price": 25000,
+        "image_url": "/public/uploads/12345_fries.jpg"
+    }
 }
 ```
 
@@ -113,3 +126,21 @@ Front-end kemudian dapat menggunakan `sender_id` untuk menampilkan nama dan foto
       "text": "Bro, join sini lah..."
     }
     ```
+
+---
+### 5. Notifikasi Real-time untuk Admin
+
+Admin yang terhubung ke WebSocket akan menerima notifikasi *real-time* untuk event-event tertentu.
+
+#### Pesanan Baru
+
+Ketika seorang pelanggan membuat pesanan baru, admin akan menerima pesan dengan format:
+
+```json
+{
+    "type": "NEW_ORDER",
+    "data": {
+        // ... (Objek pesanan lengkap seperti pada response GET /admin/orders)
+    }
+}
+```
