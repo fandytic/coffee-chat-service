@@ -6,7 +6,7 @@ type Table struct {
 	gorm.Model
 	TableNumber string `gorm:"not null"`
 	TableName   string
-	XCoordinate int `gorm:"not null"`
-	YCoordinate int `gorm:"not null"`
+	XCoordinate float64 `gorm:"not null"`
+	YCoordinate float64 `gorm:"not null"`
 	FloorID     uint
 }

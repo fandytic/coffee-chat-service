@@ -1,12 +1,12 @@
 package model
 
 type TableData struct {
-	ID               uint   `json:"table_id"`
-	TableNumber      string `json:"table_number"`
-	TableName        string `json:"table_name"`
-	XCoordinate      int    `json:"x"`
-	YCoordinate      int    `json:"y"`
-	ActiveUsersCount int    `json:"active_users_count"`
+	ID               uint    `json:"table_id"`
+	TableNumber      string  `json:"table_number"`
+	TableName        string  `json:"table_name"`
+	XCoordinate      float64 `json:"x"`
+	YCoordinate      float64 `json:"y"`
+	ActiveUsersCount int     `json:"active_users_count"`
 }
 
 type FloorPlanResponse struct {
@@ -17,9 +17,9 @@ type FloorPlanResponse struct {
 }
 
 type UpdateTableRequest struct {
-	TableName   string `json:"table_name"`
-	XCoordinate int    `json:"x"`
-	YCoordinate int    `json:"y"`
+	TableName   string  `json:"table_name"`
+	XCoordinate float64 `json:"x"`
+	YCoordinate float64 `json:"y"`
 }
 
 type FloorInfoResponse struct {
