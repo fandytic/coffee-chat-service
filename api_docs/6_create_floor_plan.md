@@ -18,14 +18,14 @@ Endpoint ini digunakan untuk membuat data denah lantai baru, termasuk posisi mej
         {
             "table_number": "01",
             "table_name": "Dekat Jendela",
-            "x": 120,
-            "y": 250
+            "x": 120.324234,
+            "y": 250.52342
         },
         {
             "table_number": "02",
             "table_name": "Tengah",
-            "x": 350,
-            "y": 250
+            "x": 350.4234,
+            "y": 250.23423
         }
     ]
 }
