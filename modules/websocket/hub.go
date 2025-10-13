@@ -41,6 +41,7 @@ type IncomingMessagePayload struct {
 	SenderName        string              `json:"sender_name"`
 	SenderPhotoURL    string              `json:"sender_photo_url"`
 	SenderTableNumber string              `json:"sender_table_number"`
+	SenderFloorNumber int                 `json:"sender_floor_number"`
 	Text              string              `json:"text"`
 	Timestamp         time.Time           `json:"timestamp"`
 	ReplyTo           *RepliedMessageInfo `json:"reply_to,omitempty"`
@@ -121,7 +122,7 @@ func (h *Hub) Run() {
 			}
 
 			var sender entity.Customer
-			if err := h.DB.Preload("Table").First(&sender, directMsg.SenderID).Error; err != nil {
+			if err := h.DB.Preload("Table.Floor").First(&sender, directMsg.SenderID).Error; err != nil {
 				continue
 			}
 
@@ -157,6 +158,7 @@ func (h *Hub) Run() {
 					SenderName:        sender.Name,
 					SenderPhotoURL:    sender.PhotoURL,
 					SenderTableNumber: sender.Table.TableNumber,
+					SenderFloorNumber: sender.Table.Floor.FloorNumber,
 					Text:              chatMessage.Text,
 					Timestamp:         chatMessage.CreatedAt,
 					ReplyTo:           repliedToInfo,

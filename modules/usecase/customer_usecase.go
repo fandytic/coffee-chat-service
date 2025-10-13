@@ -19,8 +19,8 @@ type CustomerUseCase struct {
 }
 
 func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.CustomerCheckInResponse, error) {
-	tableExists, err := uc.CustomerRepo.CheckTableExists(req.TableID)
-	if err != nil || !tableExists {
+	table, err := uc.CustomerRepo.FindTableDetailsByID(req.TableID)
+	if err != nil {
 		return nil, errors.New("table not found")
 	}
 
@@ -39,7 +39,7 @@ func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.Cus
 		"customer_id": customer.ID,
 		"name":        customer.Name,
 		"table_id":    customer.TableID,
-		"exp":         time.Now().Add(time.Hour * 8).Unix(), // Sesi berlaku 8 jam
+		"exp":         time.Now().Add(time.Hour * 8).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	secret := os.Getenv("JWT_SECRET_KEY")
@@ -49,11 +49,13 @@ func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.Cus
 	}
 
 	return &model.CustomerCheckInResponse{
-		ID:        customer.ID,
-		Name:      customer.Name,
-		PhotoURL:  customer.PhotoURL,
-		TableID:   customer.TableID,
-		AuthToken: authToken,
+		ID:          customer.ID,
+		Name:        customer.Name,
+		PhotoURL:    customer.PhotoURL,
+		TableID:     customer.TableID,
+		TableNumber: table.TableNumber,
+		FloorNumber: table.Floor.FloorNumber,
+		AuthToken:   authToken,
 	}, nil
 }
 
@@ -92,6 +94,7 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) (*model.P
 			Name:                cust.Name,
 			PhotoURL:            cust.PhotoURL,
 			TableNumber:         cust.Table.TableNumber,
+			FloorNumber:         cust.Table.Floor.FloorNumber,
 			UnreadMessagesCount: unreadMap[cust.ID],
 			LastMessage:         lastMsg,
 		})

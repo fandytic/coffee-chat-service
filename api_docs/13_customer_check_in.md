@@ -47,6 +47,8 @@ Responsnya berisi detail customer dan `auth_token` yang harus disimpan oleh fron
         "name": "Christine Stanley",
         "photo_url": "",
         "table_id": 1,
+        "table_number": "01",
+        "floor_number": 1,
         "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcl9pZCI6MSwiZXhwIjoxNzI4MjgwNzgwLCJuYW1lIjoiQ2hyaXN0aW5lIFN0YW5sZXkiLCJ0YWJsZV9pZCI6MX0.some_signature"
     }
 }
