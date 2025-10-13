@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/usecase"
+	"coffee-chat-service/modules/utils"
 )
 
 type CustomerHandler struct {
@@ -33,20 +31,10 @@ func (h *CustomerHandler) CheckIn(c *fiber.Ctx) error {
 }
 
 func (h *CustomerHandler) GetActiveCustomers(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-
-	customerIDClaim, ok := claims["customer_id"]
-	if !ok {
-		return model.ErrorResponse(c, fiber.StatusForbidden, "Forbidden: Access is restricted to customers only")
+	loggedInCustomerID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, err.Error())
 	}
-
-	customerIDFloat, ok := customerIDClaim.(float64)
-	if !ok {
-		return model.ErrorResponse(c, fiber.StatusBadRequest, fmt.Sprintf("Invalid customer_id type in token: %T", customerIDClaim))
-	}
-
-	loggedInCustomerID := uint(customerIDFloat)
 
 	customers, err := h.CustomerService.GetActiveCustomers(loggedInCustomerID)
 	if err != nil {

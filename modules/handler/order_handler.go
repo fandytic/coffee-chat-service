@@ -3,9 +3,9 @@ package handler
 import (
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/usecase"
+	"coffee-chat-service/modules/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	// ...
 )
 
@@ -14,9 +14,10 @@ type OrderHandler struct {
 }
 
 func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	customerID := uint(claims["customer_id"].(float64))
+	customerID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, err.Error())
+	}
 
 	var req model.CreateOrderRequest
 	if err := c.BodyParser(&req); err != nil {

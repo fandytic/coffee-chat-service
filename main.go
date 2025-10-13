@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
@@ -66,6 +67,11 @@ func main() {
 	orderHandler := &handler.OrderHandler{OrderService: orderUseCase}
 
 	app := fiber.New()
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+	}))
 	app.Static("/public", "./public")
 	router.SetupRoutes(app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
 		imageUploadHandler, customerHandler, dashboardHandler, chatHandler, menuHandler,

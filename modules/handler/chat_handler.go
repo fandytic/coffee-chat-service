@@ -2,10 +2,10 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/usecase"
+	"coffee-chat-service/modules/utils"
 )
 
 type ChatHandler struct {
@@ -13,9 +13,10 @@ type ChatHandler struct {
 }
 
 func (h *ChatHandler) MarkMessagesAsRead(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	recipientID := uint(claims["customer_id"].(float64))
+	recipientID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, err.Error())
+	}
 
 	senderID, err := c.ParamsInt("sender_id")
 	if err != nil {
@@ -30,9 +31,10 @@ func (h *ChatHandler) MarkMessagesAsRead(c *fiber.Ctx) error {
 }
 
 func (h *ChatHandler) GetMessageHistory(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	loggedInCustomerID := uint(claims["customer_id"].(float64))
+	loggedInCustomerID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, err.Error())
+	}
 
 	otherCustomerID, err := c.ParamsInt("id")
 	if err != nil {

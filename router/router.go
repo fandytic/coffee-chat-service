@@ -30,7 +30,7 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 		return handler.HandleWebSocketConnection(hub, c)
 	})
 
-	adminProtected := app.Group("/admin", middleware.Protected())
+	adminProtected := app.Group("/admin", middleware.AdminProtected())
 	adminProtected.Post("/logout", authHandler.Logout)
 
 	adminProtected.Post("/send", messageHandler.SendMessage)
@@ -56,7 +56,7 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 
 	adminProtected.Get("/customers", customerHandler.GetAllCustomers)
 
-	customerProtected := app.Group("/customer", middleware.Protected())
+	customerProtected := app.Group("/customer", middleware.CustomerProtected())
 	customerProtected.Get("/active-list", customerHandler.GetActiveCustomers)
 	customerProtected.Get("/stats", dashboardHandler.GetStats)
 	customerProtected.Get("/floor-plans/:floor_number", floorPlanHandler.GetFloorPlan)
