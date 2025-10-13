@@ -9,11 +9,13 @@ type CustomerCheckInRequest struct {
 }
 
 type CustomerCheckInResponse struct {
-	ID        uint   `json:"id"`
-	Name      string `json:"name"`
-	PhotoURL  string `json:"photo_url"`
-	TableID   uint   `json:"table_id"`
-	AuthToken string `json:"auth_token"`
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	PhotoURL    string `json:"photo_url"`
+	TableID     uint   `json:"table_id"`
+	TableNumber string `json:"table_number"`
+	FloorNumber int    `json:"floor_number"`
+	AuthToken   string `json:"auth_token"`
 }
 
 type LastMessage struct {
@@ -26,8 +28,9 @@ type ActiveCustomerResponse struct {
 	Name                string       `json:"name"`
 	PhotoURL            string       `json:"photo_url"`
 	TableNumber         string       `json:"table_number"`
+	FloorNumber         int          `json:"floor_number"`
 	UnreadMessagesCount int          `json:"unread_messages_count"`
-	LastMessage         *LastMessage `json:"last_message,omitempty"` // <-- TAMBAHKAN INI
+	LastMessage         *LastMessage `json:"last_message,omitempty"`
 }
 
 type PaginatedActiveCustomersResponse struct {

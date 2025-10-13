@@ -17,7 +17,7 @@ func NewCustomerRepository(db *gorm.DB) *CustomerRepository {
 
 func (r *CustomerRepository) FindAllActiveExcept(customerID uint) ([]entity.Customer, error) {
 	var customers []entity.Customer
-	err := r.DB.Preload("Table").
+	err := r.DB.Preload("Table.Floor").
 		Where("status = ? AND id != ?", "active", customerID).
 		Find(&customers).Error
 	return customers, err
@@ -51,4 +51,10 @@ func (r *CustomerRepository) FindAll(search string) ([]entity.Customer, error) {
 	}
 	err := query.Find(&customers).Error
 	return customers, err
+}
+
+func (r *CustomerRepository) FindTableDetailsByID(tableID uint) (*entity.Table, error) {
+	var table entity.Table
+	err := r.DB.Preload("Floor").First(&table, tableID).Error
+	return &table, err
 }

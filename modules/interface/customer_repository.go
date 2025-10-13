@@ -13,4 +13,5 @@ type CustomerRepositoryInterface interface {
 	CheckTableExists(tableID uint) (bool, error)
 	CreateCustomer(customer *entity.Customer) error
 	FindAll(search string) ([]entity.Customer, error)
+	FindTableDetailsByID(tableID uint) (*entity.Table, error)
 }

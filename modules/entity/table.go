@@ -9,4 +9,5 @@ type Table struct {
 	XCoordinate float64 `gorm:"not null"`
 	YCoordinate float64 `gorm:"not null"`
 	FloorID     uint
+	Floor       Floor
 }

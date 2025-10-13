@@ -53,6 +53,7 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
   - `sender_name` (string): Nama pengirim.
   - `sender_photo_url` (string): URL foto pengirim.
   - `sender_table_number` (string): Nomor meja pengirim.
+  - `sender_floor_number` (integer): **Nomor lantai pengirim.**
   - `text` (string): Isi pesan.
   - `timestamp` (string): Waktu pesan dibuat (format ISO 8601).
   - `reply_to` (objek, opsional): Berisi detail pesan yang dibalas.
@@ -92,6 +93,7 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     "sender_name": "Edward",
     "sender_photo_url": "/public/uploads/...",
     "sender_table_number": "05",
+    "sender_floor_number": 1,
     "text": "Haha mirip dikit",
     "timestamp": "2025-10-07T20:02:00Z",
     "reply_to": {

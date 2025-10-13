@@ -31,6 +31,7 @@ curl --location 'http://localhost:8080/customer/active-list' \
                 "name": "Mary Holmes",
                 "photo_url": "/public/uploads/...",
                 "table_number": "01",
+                "floor_number": 1,
                 "unread_messages_count": 3,
                 "last_message": {
                     "text": "Kok ga dibales?",
@@ -42,6 +43,7 @@ curl --location 'http://localhost:8080/customer/active-list' \
                 "name": "Jeremy Gibson",
                 "photo_url": "/public/uploads/...",
                 "table_number": "01",
+                "floor_number": 1,
                 "unread_messages_count": 1,
                 "last_message": {
                     "text": "Bro, join sini lah...",
@@ -53,6 +55,7 @@ curl --location 'http://localhost:8080/customer/active-list' \
                 "name": "Johnny Mendez",
                 "photo_url": "/public/uploads/...",
                 "table_number": "03",
+                "floor_number": 1,
                 "unread_messages_count": 0,
                 "last_message": null
             }
