@@ -19,9 +19,11 @@ import (
 
 func main() {
 	db := config.InitDB()
-	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{},
-		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{}, &entity.Menu{},
-		&entity.OrderItem{})
+	db.AutoMigrate(
+		&entity.Message{}, &entity.Admin{}, &entity.Floor{},
+		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{},
+		&entity.Menu{}, &entity.Order{}, &entity.OrderItem{},
+	)
 
 	// Seeder untuk membuat admin default jika belum ada
 	createDefaultAdmin(db)
