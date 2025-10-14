@@ -59,8 +59,8 @@ func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.Cus
 	}, nil
 }
 
-func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint) (*model.PaginatedActiveCustomersResponse, error) {
-	customers, err := uc.CustomerRepo.FindAllActiveExcept(loggedInCustomerID)
+func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint, filter model.CustomerFilter) (*model.PaginatedActiveCustomersResponse, error) {
+	customers, err := uc.CustomerRepo.FindAllActiveExcept(loggedInCustomerID, filter)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
+	"coffee-chat-service/modules/model"
 )
 
 type CustomerRepository struct {
@@ -15,11 +16,25 @@ func NewCustomerRepository(db *gorm.DB) *CustomerRepository {
 	return &CustomerRepository{DB: db}
 }
 
-func (r *CustomerRepository) FindAllActiveExcept(customerID uint) ([]entity.Customer, error) {
+func (r *CustomerRepository) FindAllActiveExcept(customerID uint, filter model.CustomerFilter) ([]entity.Customer, error) {
 	var customers []entity.Customer
-	err := r.DB.Preload("Table.Floor").
-		Where("status = ? AND id != ?", "active", customerID).
-		Find(&customers).Error
+	query := r.DB.Joins("JOIN tables ON tables.id = customers.table_id").
+		Joins("JOIN floors ON floors.id = tables.floor_id").
+		Where("customers.status = ? AND customers.id != ?", "active", customerID)
+
+	// Tambahkan filter secara dinamis jika ada
+	if filter.Search != "" {
+		query = query.Where("customers.name ILIKE ?", "%"+filter.Search+"%")
+	}
+	if filter.FloorNumber != 0 {
+		query = query.Where("floors.floor_number = ?", filter.FloorNumber)
+	}
+	if filter.TableNumber != "" {
+		query = query.Where("tables.table_number = ?", filter.TableNumber)
+	}
+
+	// Eksekusi query akhir
+	err := query.Preload("Table.Floor").Order("customers.updated_at desc").Find(&customers).Error
 	return customers, err
 }
 
