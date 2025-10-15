@@ -55,7 +55,7 @@ func main() {
 	dashboardUseCase := &usecase.DashboardUseCase{DashboardRepo: dashboardRepo}
 	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}
 	menuUseCase := &usecase.MenuUseCase{MenuRepo: menuRepo}
-	orderUseCase := &usecase.OrderUseCase{OrderRepo: orderRepo, Hub: hub}
+	orderUseCase := &usecase.OrderUseCase{OrderRepo: orderRepo, ChatRepo: chatRepo, Hub: hub}
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
