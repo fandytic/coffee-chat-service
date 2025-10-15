@@ -8,10 +8,11 @@ type SendMessageRequest struct {
 }
 
 type ChatHistoryReply struct {
-	ID         uint             `json:"id"`
-	Text       string           `json:"text"`
-	SenderName string           `json:"sender_name"`
-	Menu       *ChatHistoryMenu `json:"menu,omitempty"`
+	ID         uint              `json:"id"`
+	Text       string            `json:"text"`
+	SenderName string            `json:"sender_name"`
+	Menu       *ChatHistoryMenu  `json:"menu,omitempty"`
+	Order      *ChatHistoryOrder `json:"order,omitempty"`
 }
 
 type ChatHistoryMenu struct {

@@ -70,6 +70,14 @@ func buildChatHistoryMessage(message *entity.ChatMessage) model.ChatHistoryMessa
 			}
 		}
 
+		if message.ReplyToMessage.OrderID != nil && message.ReplyToMessage.Order != nil {
+			reply.Order = buildChatHistoryOrder(message.ReplyToMessage.Order)
+		}
+
+		if message.ReplyToMessage.OrderID != nil && message.ReplyToMessage.Order != nil {
+			reply.Order = buildChatHistoryOrder(message.ReplyToMessage.Order)
+		}
+
 		history.ReplyTo = reply
 	}
 
