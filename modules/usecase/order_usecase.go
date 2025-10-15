@@ -251,11 +251,11 @@ func buildChatMessage(needType, senderName, recipientName string, itemLines []st
 
 	switch needType {
 	case model.OrderNeedForOthers:
-		builder.WriteString(fmt.Sprintf("Halo %s! %s baru saja memesankan untukmu.\n", recipientName, senderName))
+		builder.WriteString(fmt.Sprintf("%s mentraktirmu!\n", senderName))
 	case model.OrderNeedRequestTreat:
-		builder.WriteString(fmt.Sprintf("Halo %s! %s meminta traktiran. Berikut detail pesanannya.\n", recipientName, senderName))
+		builder.WriteString(fmt.Sprintf("%s minta ditraktir!\n", senderName))
 	default:
-		builder.WriteString(fmt.Sprintf("Halo %s! %s membuat pesanan baru.\n", recipientName, senderName))
+		builder.WriteString(fmt.Sprintf("%s membuat pesanan baru.\n", senderName))
 	}
 
 	if tableNumber != "" {
