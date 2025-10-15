@@ -20,6 +20,10 @@ func (r *ChatRepository) MarkMessagesAsRead(senderID, recipientID uint) error {
 		Update("is_read", true).Error
 }
 
+func (r *ChatRepository) CreateMessage(message *entity.ChatMessage) error {
+	return r.DB.Create(message).Error
+}
+
 func (r *ChatRepository) FindLastMessages(userID uint) (map[uint]*entity.ChatMessage, error) {
 	var messages []entity.ChatMessage
 

@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -152,21 +153,9 @@ func (h *Hub) Run() {
 			}
 
 			if recipient, ok := h.customers[payload.RecipientID]; ok {
-				responsePayload := IncomingMessagePayload{
-					MessageID:         chatMessage.ID,
-					SenderID:          sender.ID,
-					SenderName:        sender.Name,
-					SenderPhotoURL:    sender.PhotoURL,
-					SenderTableNumber: sender.Table.TableNumber,
-					SenderFloorNumber: sender.Table.Floor.FloorNumber,
-					Text:              chatMessage.Text,
-					Timestamp:         chatMessage.CreatedAt,
-					ReplyTo:           repliedToInfo,
-					Menu:              menuInfo,
+				if payload, err := h.buildIncomingPayload(&chatMessage, &sender, repliedToInfo, menuInfo); err == nil {
+					recipient.send <- payload
 				}
-				responseJSON, _ := json.Marshal(responsePayload)
-
-				recipient.send <- responseJSON
 			} else {
 				log.Printf("Recipient not found or offline: CustomerID %d", payload.RecipientID)
 			}
@@ -195,4 +184,74 @@ func (h *Hub) Run() {
 
 		}
 	}
+}
+
+func (h *Hub) SendChatMessage(chatMessage *entity.ChatMessage) {
+	if chatMessage == nil {
+		return
+	}
+
+	var sender entity.Customer
+	if err := h.DB.Preload("Table.Floor").First(&sender, chatMessage.SenderID).Error; err != nil {
+		log.Printf("failed to load sender for chat message %d: %v", chatMessage.ID, err)
+		return
+	}
+
+	var repliedToInfo *RepliedMessageInfo
+	if chatMessage.ReplyToMessageID != nil {
+		var originalMsg entity.ChatMessage
+		if err := h.DB.Preload("Sender").First(&originalMsg, *chatMessage.ReplyToMessageID).Error; err == nil {
+			repliedToInfo = &RepliedMessageInfo{
+				ID:         originalMsg.ID,
+				Text:       originalMsg.Text,
+				SenderName: originalMsg.Sender.Name,
+			}
+		}
+	}
+
+	var menuInfo *MenuInfo
+	if chatMessage.MenuID != nil {
+		var menu entity.Menu
+		if err := h.DB.First(&menu, *chatMessage.MenuID).Error; err == nil {
+			menuInfo = &MenuInfo{
+				ID:       menu.ID,
+				Name:     menu.Name,
+				Price:    menu.Price,
+				ImageURL: menu.ImageURL,
+			}
+		}
+	}
+
+	payload, err := h.buildIncomingPayload(chatMessage, &sender, repliedToInfo, menuInfo)
+	if err != nil {
+		return
+	}
+
+	if recipient, ok := h.customers[chatMessage.RecipientID]; ok {
+		recipient.send <- payload
+	}
+}
+
+func (h *Hub) buildIncomingPayload(chatMessage *entity.ChatMessage, sender *entity.Customer, repliedToInfo *RepliedMessageInfo, menuInfo *MenuInfo) ([]byte, error) {
+	if chatMessage == nil || sender == nil {
+		return nil, fmt.Errorf("invalid chat payload")
+	}
+
+	responsePayload := IncomingMessagePayload{
+		MessageID:         chatMessage.ID,
+		SenderID:          sender.ID,
+		SenderName:        sender.Name,
+		SenderPhotoURL:    sender.PhotoURL,
+		SenderTableNumber: sender.Table.TableNumber,
+		SenderFloorNumber: sender.Table.Floor.FloorNumber,
+		Text:              chatMessage.Text,
+		Timestamp:         chatMessage.CreatedAt,
+		ReplyTo:           repliedToInfo,
+		Menu:              menuInfo,
+	}
+	responseJSON, err := json.Marshal(responsePayload)
+	if err != nil {
+		return nil, err
+	}
+	return responseJSON, nil
 }
