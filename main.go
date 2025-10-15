@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -67,6 +68,14 @@ func main() {
 	chatHandler := &handler.ChatHandler{ChatService: chatUseCase}
 	menuHandler := &handler.MenuHandler{MenuService: menuUseCase}
 	orderHandler := &handler.OrderHandler{OrderService: orderUseCase}
+
+	ticker := time.NewTicker(10 * time.Minute)
+	go func() {
+		for range ticker.C {
+			log.Println("INFO: Running scheduled cleanup for inactive customer sessions...")
+			customerUseCase.CleanUpInactiveCustomers()
+		}
+	}()
 
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{

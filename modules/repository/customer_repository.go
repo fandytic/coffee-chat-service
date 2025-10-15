@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 
 	"coffee-chat-service/modules/entity"
@@ -22,7 +24,6 @@ func (r *CustomerRepository) FindAllActiveExcept(customerID uint, filter model.C
 		Joins("JOIN floors ON floors.id = tables.floor_id").
 		Where("customers.status = ? AND customers.id != ?", "active", customerID)
 
-	// Tambahkan filter secara dinamis jika ada
 	if filter.Search != "" {
 		query = query.Where("customers.name ILIKE ?", "%"+filter.Search+"%")
 	}
@@ -33,7 +34,6 @@ func (r *CustomerRepository) FindAllActiveExcept(customerID uint, filter model.C
 		query = query.Where("tables.table_number = ?", filter.TableNumber)
 	}
 
-	// Eksekusi query akhir
 	err := query.Preload("Table.Floor").Order("customers.updated_at desc").Find(&customers).Error
 	return customers, err
 }
@@ -72,4 +72,12 @@ func (r *CustomerRepository) FindTableDetailsByID(tableID uint) (*entity.Table, 
 	var table entity.Table
 	err := r.DB.Preload("Floor").First(&table, tableID).Error
 	return &table, err
+}
+
+func (r *CustomerRepository) UpdateStatusForInactiveCustomers(timeout time.Duration) (int64, error) {
+	result := r.DB.Model(&entity.Customer{}).
+		Where("status = ? AND updated_at < ?", "active", time.Now().Add(-timeout)).
+		Update("status", "inactive")
+
+	return result.RowsAffected, result.Error
 }

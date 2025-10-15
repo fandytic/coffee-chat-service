@@ -3,6 +3,7 @@ package usecase
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -132,4 +133,16 @@ func (uc *CustomerUseCase) GetAllCustomers(search string) ([]model.AllCustomersR
 	}
 
 	return response, nil
+}
+
+func (uc *CustomerUseCase) CleanUpInactiveCustomers() {
+	timeout := 8 * time.Hour
+	rowsAffected, err := uc.CustomerRepo.UpdateStatusForInactiveCustomers(timeout)
+	if err != nil {
+		log.Printf("ERROR: Failed to run cleanup for inactive customers: %v", err)
+		return
+	}
+	if rowsAffected > 0 {
+		log.Printf("INFO: Cleaned up %d inactive customer session(s)", rowsAffected)
+	}
 }
