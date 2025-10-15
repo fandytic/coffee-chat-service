@@ -6,6 +6,13 @@ Endpoint ini mengambil daftar semua pelanggan yang saat ini berstatus aktif di k
 - **Authentication**: `Bearer Token` (Customer)
 
 ---
+### Query Parameters (Opsional)
+
+-   **`search`** (string): Mencari pelanggan berdasarkan nama.
+-   **`floor`** (integer): Filter pelanggan berdasarkan nomor lantai.
+-   **`table`** (string): Filter pelanggan berdasarkan nomor meja.
+
+---
 
 ### Contoh cURL
 
@@ -13,7 +20,25 @@ Endpoint ini mengambil daftar semua pelanggan yang saat ini berstatus aktif di k
 curl --location 'http://localhost:8080/customer/active-list' \
 --header 'Authorization: Bearer <CUSTOMER_TOKEN>'
 ```
+**Mencari nama "Mary":**
+```sh
+curl --location 'http://localhost:8080/customer/active-list?search=Mary' \
+--header 'Authorization: Bearer <CUSTOMER_TOKEN>'
+```
 
+**Melihat semua pelanggan di lantai 2:**
+```sh
+curl --location 'http://localhost:8080/customer/active-list?floor=2' \
+--header 'Authorization: Bearer <CUSTOMER_TOKEN>'
+```
+
+**Melihat semua pelanggan di meja "05":**
+```sh
+curl --location 'http://localhost:8080/customer/active-list?table=05' \
+--header 'Authorization: Bearer <CUSTOMER_TOKEN>'
+```
+
+---
 ---
 
 ### Contoh Success Response (Code: 200)

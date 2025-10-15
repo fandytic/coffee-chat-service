@@ -34,9 +34,6 @@ func (r *OrderRepository) FindMenusByIDs(menuIDs []uint) (map[uint]entity.Menu, 
 func (r *OrderRepository) FindCustomerWithTable(customerID uint) (*entity.Customer, error) {
 	var customer entity.Customer
 	if err := r.DB.Preload("Table").First(&customer, customerID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, model.ErrCustomerNotFound
-		}
 		return nil, err
 	}
 	return &customer, nil
@@ -66,8 +63,5 @@ func (r *OrderRepository) FindByID(id uint) (*entity.Order, error) {
 		Preload("Table").
 		Preload("OrderItems.Menu").
 		First(&order, id).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, model.ErrOrderNotFound
-	}
 	return &order, err
 }

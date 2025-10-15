@@ -210,20 +210,11 @@ func (h *Hub) SendChatMessage(chatMessage *entity.ChatMessage) {
 	var repliedToInfo *RepliedMessageInfo
 	if chatMessage.ReplyToMessageID != nil {
 		var originalMsg entity.ChatMessage
-		if err := h.DB.Preload("Sender").Preload("Menu").First(&originalMsg, *chatMessage.ReplyToMessageID).Error; err == nil {
+		if err := h.DB.Preload("Sender").First(&originalMsg, *chatMessage.ReplyToMessageID).Error; err == nil {
 			repliedToInfo = &RepliedMessageInfo{
 				ID:         originalMsg.ID,
 				Text:       originalMsg.Text,
 				SenderName: originalMsg.Sender.Name,
-			}
-
-			if originalMsg.MenuID != nil && originalMsg.Menu != nil {
-				repliedToInfo.Menu = &MenuInfo{
-					ID:       originalMsg.Menu.ID,
-					Name:     originalMsg.Menu.Name,
-					Price:    originalMsg.Menu.Price,
-					ImageURL: originalMsg.Menu.ImageURL,
-				}
 			}
 		}
 	}

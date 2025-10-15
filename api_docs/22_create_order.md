@@ -88,46 +88,4 @@ API akan secara otomatis menghitung `sub_total`, `tax`, dan `total` berdasarkan 
 }
 ```
 
-> **Catatan**:
-> -   Ketika `need_type` bukan `self_order`, sistem akan mengirim ringkasan pesanan melalui WebSocket chat kepada pelanggan yang dipilih.
-> -   Notifikasi real-time ke admin hanya dikirim untuk pesanan `self_order` dan `order_for_other`.
-> -   Untuk `request_treat`, API hanya membuat permintaan traktir dan mengirimkannya ke pelanggan yang diminta melalui chat. `order_id` akan bernilai `0` dan admin baru menerima data pesanan ketika pelanggan yang diminta menekan tombol **Bayar** (front end akan memanggil kembali endpoint ini sebagai `order_for_other`).
-
-### Contoh Respons `request_treat`
-
-```json
-{
-    "success": true,
-    "code": 201,
-    "message": "Order created successfully",
-    "data": {
-        "order_id": 0,
-        "customer_id": 11,
-        "customer_name": "Unknown User",
-        "table_id": 15,
-        "table_number": "07",
-        "table_name": "Meja 07",
-        "need_type": "request_treat",
-        "recipient": {
-            "customer_id": 5,
-            "name": "Christine Stanley",
-            "table_id": 7,
-            "table_number": "01"
-        },
-        "notes": "Traktir please...",
-        "sub_total": 25000,
-        "tax": 2750,
-        "total": 27750,
-        "created_at": "2025-10-11T13:45:00Z",
-        "items": [
-            {
-                "menu_id": 1,
-                "menu_name": "French Fries",
-                "quantity": 1,
-                "unit_price": 25000,
-                "total_price": 25000
-            }
-        ]
-    }
-}
-```
+> **Catatan**: Ketika `need_type` bukan `self_order`, sistem akan mengirim ringkasan pesanan melalui WebSocket chat kepada pelanggan yang dipilih. Admin juga menerima notifikasi pesanan baru secara real-time.

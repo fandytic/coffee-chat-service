@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 
 	"coffee-chat-service/modules/model"
@@ -36,7 +38,14 @@ func (h *CustomerHandler) GetActiveCustomers(c *fiber.Ctx) error {
 		return model.ErrorResponse(c, fiber.StatusForbidden, err.Error())
 	}
 
-	customers, err := h.CustomerService.GetActiveCustomers(loggedInCustomerID)
+	floorNumber, _ := strconv.Atoi(c.Query("floor")) // Konversi string ke integer
+	filter := model.CustomerFilter{
+		Search:      c.Query("search"),
+		FloorNumber: floorNumber,
+		TableNumber: c.Query("table"),
+	}
+
+	customers, err := h.CustomerService.GetActiveCustomers(loggedInCustomerID, filter)
 	if err != nil {
 		return model.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve active customers")
 	}

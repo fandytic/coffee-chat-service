@@ -7,18 +7,18 @@ import (
 	"log"
 	"math"
 	"strings"
-	"time"
 
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/websocket"
+	"gorm.io/gorm"
 )
 
 const TAX_RATE = 0.11 // Pajak 11%
 
 type OrderUseCase struct {
-	OrderRepo interfaces.OrderRepositoryInterface
+	OrderRepo *repository.OrderRepository
 	ChatRepo  interfaces.ChatRepositoryInterface
 	Hub       *websocket.Hub
 }
@@ -41,7 +41,7 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 
 	customer, err := uc.OrderRepo.FindCustomerWithTable(customerID)
 	if err != nil {
-		if errors.Is(err, model.ErrCustomerNotFound) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, &model.ValidationError{Message: "customer not found"}
 		}
 		return nil, err
@@ -61,7 +61,7 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 
 		recipient, err = uc.OrderRepo.FindCustomerWithTable(*req.RecipientCustomerID)
 		if err != nil {
-			if errors.Is(err, model.ErrCustomerNotFound) {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, &model.ValidationError{Message: "recipient not found"}
 			}
 			return nil, err
@@ -102,7 +102,6 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 	for _, item := range req.OrderItems {
 		menu := menuMap[item.MenuID]
 		lineTotal := menu.Price * float64(item.Quantity)
-		formattedLineTotal := formatCurrency(lineTotal)
 
 		subTotal += lineTotal
 		orderItems = append(orderItems, entity.OrderItem{
@@ -119,7 +118,7 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 			TotalPrice: lineTotal,
 		})
 
-		summaryLines = append(summaryLines, fmt.Sprintf("- %s x%d (%s)", menu.Name, item.Quantity, formattedLineTotal))
+		summaryLines = append(summaryLines, fmt.Sprintf("- %s x%d (%s)", menu.Name, item.Quantity, formatCurrency(lineTotal)))
 	}
 
 	tax := subTotal * TAX_RATE
@@ -134,55 +133,31 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 		tableName = recipient.Table.TableName
 	}
 
-	var (
-		orderID   uint
-		createdAt time.Time
-	)
-
-	if needType != model.OrderNeedRequestTreat {
-		order := &entity.Order{
-			CustomerID: customerID,
-			TableID:    tableID,
-			NeedType:   needType,
-			SubTotal:   subTotal,
-			Tax:        tax,
-			Total:      total,
-			Status:     "pending",
-			Notes:      req.Notes,
-			OrderItems: orderItems,
-		}
-
-		if recipient != nil {
-			order.RecipientID = new(uint)
-			*order.RecipientID = recipient.ID
-		}
-
-		if err := uc.OrderRepo.CreateOrder(order); err != nil {
-			return nil, err
-		}
-
-		orderID = order.ID
-		createdAt = order.CreatedAt
-
-		if fullOrder, err := uc.OrderRepo.FindByID(order.ID); err == nil {
-			notification := map[string]interface{}{
-				"type": "NEW_ORDER",
-				"data": fullOrder,
-			}
-			notificationJSON, _ := json.Marshal(notification)
-
-			uc.Hub.BroadcastAdmins <- notificationJSON
-		}
-	} else {
-		createdAt = time.Now()
+	order := &entity.Order{
+		CustomerID: customerID,
+		TableID:    tableID,
+		NeedType:   needType,
+		SubTotal:   subTotal,
+		Tax:        tax,
+		Total:      total,
+		Status:     "pending",
+		Notes:      req.Notes,
+		OrderItems: orderItems,
 	}
 
 	if recipient != nil {
-		messageText := buildChatMessage(needType, customer.Name, recipient.Name, summaryLines, subTotal, tax, total, req.Notes, tableNumber)
-		chatMessage := &entity.ChatMessage{
-			SenderID:    customerID,
-			RecipientID: recipient.ID,
-			Text:        messageText,
+		order.RecipientID = new(uint)
+		*order.RecipientID = recipient.ID
+	}
+
+	if err := uc.OrderRepo.CreateOrder(order); err != nil {
+		return nil, err
+	}
+
+	if fullOrder, err := uc.OrderRepo.FindByID(order.ID); err == nil {
+		notification := map[string]interface{}{
+			"type": "NEW_ORDER",
+			"data": fullOrder,
 		}
 
 		if needType == model.OrderNeedRequestTreat && len(req.OrderItems) > 0 {
@@ -209,8 +184,32 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 		}
 	}
 
+	if recipient != nil {
+		messageText := buildChatMessage(needType, customer.Name, recipient.Name, summaryLines, subTotal, tax, total, req.Notes, tableNumber)
+		chatMessage := &entity.ChatMessage{
+			SenderID:    customerID,
+			RecipientID: recipient.ID,
+			Text:        messageText,
+		}
+		if err := uc.ChatRepo.CreateMessage(chatMessage); err != nil {
+			log.Printf("failed to create chat message notification: %v", err)
+		} else {
+			uc.Hub.SendChatMessage(chatMessage)
+		}
+	}
+
+	var recipientSummary *model.OrderRecipient
+	if recipient != nil {
+		recipientSummary = &model.OrderRecipient{
+			CustomerID:  recipient.ID,
+			Name:        recipient.Name,
+			TableID:     recipient.TableID,
+			TableNumber: recipient.Table.TableNumber,
+		}
+	}
+
 	return &model.CreateOrderResponse{
-		OrderID:      orderID,
+		OrderID:      order.ID,
 		CustomerID:   customer.ID,
 		CustomerName: customer.Name,
 		TableID:      tableID,
@@ -223,7 +222,7 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 		Tax:          tax,
 		Total:        total,
 		Items:        responseItems,
-		CreatedAt:    createdAt,
+		CreatedAt:    order.CreatedAt,
 	}, nil
 }
 
@@ -257,12 +256,7 @@ func formatCurrency(amount float64) string {
 	return "Rp " + formatted
 }
 
-func buildChatMessage(
-	needType, senderName, recipientName string,
-	itemLines []string,
-	subTotal, tax, total float64,
-	notes, tableNumber string,
-) string {
+func buildChatMessage(needType, senderName, recipientName string, itemLines []string, subTotal, tax, total float64, notes, tableNumber string) string {
 	var builder strings.Builder
 
 	switch needType {

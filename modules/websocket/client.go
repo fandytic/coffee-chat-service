@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"log"
+	"time"
 
 	"github.com/gofiber/contrib/websocket"
 )
@@ -21,10 +22,10 @@ func (c *Client) writePump() {
 	for {
 		message, ok := <-c.send
 		if !ok {
-			c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 			return
 		}
 
+		c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
 			log.Printf("error writing message: %v", err)
 			return
