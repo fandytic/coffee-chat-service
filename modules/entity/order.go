@@ -4,14 +4,19 @@ import "gorm.io/gorm"
 
 type Order struct {
 	gorm.Model
-	CustomerID uint
-	Total      float64 `gorm:"not null"`
-	Tax        float64 `gorm:"not null"`
-	SubTotal   float64 `gorm:"not null"`
-	Status     string  `gorm:"default:'pending';not null"` // pending, processing, completed, cancelled
-	Notes      string
-	OrderItems []OrderItem
-	Customer   Customer
+	CustomerID  uint
+	TableID     uint
+	NeedType    string
+	RecipientID *uint
+	Total       float64 `gorm:"not null"`
+	Tax         float64 `gorm:"not null"`
+	SubTotal    float64 `gorm:"not null"`
+	Status      string  `gorm:"default:'pending';not null"` // pending, processing, completed, cancelled
+	Notes       string
+	OrderItems  []OrderItem
+	Customer    Customer
+	Table       Table
+	Recipient   *Customer `gorm:"foreignKey:RecipientID"`
 }
 
 type OrderItem struct {

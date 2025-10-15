@@ -21,7 +21,7 @@ func main() {
 	db := config.InitDB()
 	db.AutoMigrate(&entity.Message{}, &entity.Admin{}, &entity.Floor{},
 		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{}, &entity.Menu{},
-		&entity.OrderItem{})
+		&entity.Order{}, &entity.OrderItem{})
 
 	// Seeder untuk membuat admin default jika belum ada
 	createDefaultAdmin(db)
@@ -52,7 +52,7 @@ func main() {
 	dashboardUseCase := &usecase.DashboardUseCase{DashboardRepo: dashboardRepo}
 	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}
 	menuUseCase := &usecase.MenuUseCase{MenuRepo: menuRepo}
-	orderUseCase := &usecase.OrderUseCase{OrderRepo: orderRepo, Hub: hub}
+	orderUseCase := &usecase.OrderUseCase{OrderRepo: orderRepo, ChatRepo: chatRepo, Hub: hub}
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}

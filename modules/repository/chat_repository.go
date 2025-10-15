@@ -20,6 +20,10 @@ func (r *ChatRepository) MarkMessagesAsRead(senderID, recipientID uint) error {
 		Update("is_read", true).Error
 }
 
+func (r *ChatRepository) CreateMessage(message *entity.ChatMessage) error {
+	return r.DB.Create(message).Error
+}
+
 func (r *ChatRepository) FindLastMessages(userID uint) (map[uint]*entity.ChatMessage, error) {
 	var messages []entity.ChatMessage
 
@@ -54,8 +58,12 @@ func (r *ChatRepository) FindLastMessages(userID uint) (map[uint]*entity.ChatMes
 
 func (r *ChatRepository) GetMessageHistory(user1ID, user2ID uint) ([]entity.ChatMessage, error) {
 	var messages []entity.ChatMessage
-	err := r.DB.Where("(sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)",
-		user1ID, user2ID, user2ID, user1ID).
+	err := r.DB.Preload("Sender.Table.Floor").
+		Preload("ReplyToMessage.Sender").
+		Preload("ReplyToMessage.Menu").
+		Preload("Menu").
+		Where("(sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)",
+			user1ID, user2ID, user2ID, user1ID).
 		Order("created_at asc").
 		Find(&messages).Error
 	return messages, err

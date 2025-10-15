@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/usecase"
 	"coffee-chat-service/modules/utils"
@@ -26,6 +28,10 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 
 	order, err := h.OrderService.CreateOrder(customerID, req)
 	if err != nil {
+		var validationErr *model.ValidationError
+		if errors.As(err, &validationErr) {
+			return model.ErrorResponse(c, fiber.StatusBadRequest, validationErr.Error())
+		}
 		return model.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 

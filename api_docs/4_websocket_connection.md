@@ -60,6 +60,11 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     - `id` (integer): ID pesan asli.
     - `text` (string): Teks pesan asli.
     - `sender_name` (string): Nama pengirim pesan asli.
+    - `menu` (objek, opsional): Detail menu jika pesan asli adalah traktiran.
+      - `id` (integer): ID menu.
+      - `name` (string): Nama menu.
+      - `price` (float): Harga menu.
+      - `image_url` (string): URL gambar menu.
   - `menu` (objek, opsional): Berisi detail menu jika ini adalah pesan traktir.
     - `id` (integer): ID menu.
     - `name` (string): Nama menu.
@@ -99,7 +104,13 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     "reply_to": {
         "id": 123,
         "text": "Edward Cullen? haha",
-        "sender_name": "Christine"
+        "sender_name": "Christine",
+        "menu": {
+            "id": 42,
+            "name": "Cappuccino",
+            "price": 35000,
+            "image_url": "/public/uploads/cappuccino.png"
+        }
     }
 }
 ```
