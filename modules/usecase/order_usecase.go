@@ -11,6 +11,7 @@ import (
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
 	"coffee-chat-service/modules/model"
+	"coffee-chat-service/modules/repository"
 	"coffee-chat-service/modules/websocket"
 	"gorm.io/gorm"
 )
@@ -160,6 +161,22 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 			"data": fullOrder,
 		}
 
+		if payload, err := json.Marshal(notification); err != nil {
+			log.Printf("failed to marshal order notification: %v", err)
+		} else {
+			uc.Hub.BroadcastAdmins <- payload
+		}
+	}
+
+	var recipientSummary *model.OrderRecipient
+	if recipient != nil {
+		messageText := buildChatMessage(needType, customer.Name, recipient.Name, summaryLines, subTotal, tax, total, req.Notes, tableNumber)
+		chatMessage := &entity.ChatMessage{
+			SenderID:    customerID,
+			RecipientID: recipient.ID,
+			Text:        messageText,
+		}
+
 		if needType == model.OrderNeedRequestTreat && len(req.OrderItems) > 0 {
 			firstMenuID := req.OrderItems[0].MenuID
 			if menu, ok := menuMap[firstMenuID]; ok {
@@ -172,34 +189,6 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 		} else {
 			uc.Hub.SendChatMessage(chatMessage)
 		}
-	}
-
-	var recipientSummary *model.OrderRecipient
-	if recipient != nil {
-		recipientSummary = &model.OrderRecipient{
-			CustomerID:  recipient.ID,
-			Name:        recipient.Name,
-			TableID:     recipient.TableID,
-			TableNumber: recipient.Table.TableNumber,
-		}
-	}
-
-	if recipient != nil {
-		messageText := buildChatMessage(needType, customer.Name, recipient.Name, summaryLines, subTotal, tax, total, req.Notes, tableNumber)
-		chatMessage := &entity.ChatMessage{
-			SenderID:    customerID,
-			RecipientID: recipient.ID,
-			Text:        messageText,
-		}
-		if err := uc.ChatRepo.CreateMessage(chatMessage); err != nil {
-			log.Printf("failed to create chat message notification: %v", err)
-		} else {
-			uc.Hub.SendChatMessage(chatMessage)
-		}
-	}
-
-	var recipientSummary *model.OrderRecipient
-	if recipient != nil {
 		recipientSummary = &model.OrderRecipient{
 			CustomerID:  recipient.ID,
 			Name:        recipient.Name,
