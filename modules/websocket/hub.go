@@ -31,9 +31,10 @@ type MenuInfo struct {
 }
 
 type RepliedMessageInfo struct {
-	ID         uint   `json:"id"`
-	Text       string `json:"text"`
-	SenderName string `json:"sender_name"`
+	ID         uint      `json:"id"`
+	Text       string    `json:"text"`
+	SenderName string    `json:"sender_name"`
+	Menu       *MenuInfo `json:"menu,omitempty"`
 }
 
 type IncomingMessagePayload struct {
@@ -130,11 +131,20 @@ func (h *Hub) Run() {
 			var repliedToInfo *RepliedMessageInfo
 			if chatMessage.ReplyToMessageID != nil {
 				var originalMsg entity.ChatMessage
-				if err := h.DB.Preload("Sender").First(&originalMsg, *chatMessage.ReplyToMessageID).Error; err == nil {
+				if err := h.DB.Preload("Sender").Preload("Menu").First(&originalMsg, *chatMessage.ReplyToMessageID).Error; err == nil {
 					repliedToInfo = &RepliedMessageInfo{
 						ID:         originalMsg.ID,
 						Text:       originalMsg.Text,
 						SenderName: originalMsg.Sender.Name,
+					}
+
+					if originalMsg.MenuID != nil && originalMsg.Menu != nil {
+						repliedToInfo.Menu = &MenuInfo{
+							ID:       originalMsg.Menu.ID,
+							Name:     originalMsg.Menu.Name,
+							Price:    originalMsg.Menu.Price,
+							ImageURL: originalMsg.Menu.ImageURL,
+						}
 					}
 				}
 			}

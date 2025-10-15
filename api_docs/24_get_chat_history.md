@@ -20,7 +20,9 @@ curl --location 'http://localhost:8080/customer/chats/5' \
 ---
 ### Contoh Success Response (Code: 200)
 
-Responsnya adalah array dari semua objek pesan antara kedua pengguna, diurutkan dari yang terlama.
+Responsnya adalah array dari semua objek pesan antara kedua pengguna, diurutkan dari yang terlama. Struktur datanya sama dengan payload yang dikirimkan lewat websocket sehingga front end dapat menampilkan balasan maupun traktiran dengan konsisten.
+
+Ketika sebuah pesan merupakan balasan terhadap traktiran, properti `reply_to.menu` akan berisi detail menu yang sama seperti kartu traktiran asli.
 
 ```json
 {
@@ -29,26 +31,51 @@ Responsnya adalah array dari semua objek pesan antara kedua pengguna, diurutkan 
     "message": "Chat history retrieved successfully",
     "data": [
         {
-            "ID": 123,
-            "CreatedAt": "2025-10-07T19:59:00Z",
-            "UpdatedAt": "...",
-            "DeletedAt": null,
-            "SenderID": 5,
-            "RecipientID": 2,
-            "Text": "Edward Cullen? haha",
-            "ReplyToMessageID": null,
-            "IsRead": true
+            "message_id": 123,
+            "sender_id": 5,
+            "sender_name": "Christine",
+            "sender_photo_url": "https://cdn.example.com/avatars/christine.png",
+            "sender_table_number": "B12",
+            "sender_floor_number": 2,
+            "text": "Edward Cullen? haha",
+            "timestamp": "2025-10-07T19:59:00Z"
         },
         {
-            "ID": 125,
-            "CreatedAt": "2025-10-07T20:02:00Z",
-            "UpdatedAt": "...",
-            "DeletedAt": null,
-            "SenderID": 2,
-            "RecipientID": 5,
-            "Text": "Haha mirip dikit",
-            "ReplyToMessageID": 123,
-            "IsRead": true
+            "message_id": 125,
+            "sender_id": 2,
+            "sender_name": "Edward",
+            "sender_photo_url": "https://cdn.example.com/avatars/edward.png",
+            "sender_table_number": "A04",
+            "sender_floor_number": 1,
+            "text": "Haha mirip dikit",
+            "timestamp": "2025-10-07T20:02:00Z",
+            "reply_to": {
+                "id": 123,
+                "text": "Edward Cullen? haha",
+                "sender_name": "Christine",
+                "menu": {
+                    "id": 42,
+                    "name": "Cappuccino",
+                    "price": 35000,
+                    "image_url": "https://cdn.example.com/menu/cappuccino.png"
+                }
+            }
+        },
+        {
+            "message_id": 127,
+            "sender_id": 5,
+            "sender_name": "Christine",
+            "sender_photo_url": "https://cdn.example.com/avatars/christine.png",
+            "sender_table_number": "B12",
+            "sender_floor_number": 2,
+            "text": "Ini traktir cappuccino favoritmu ya!",
+            "timestamp": "2025-10-07T20:05:00Z",
+            "menu": {
+                "id": 42,
+                "name": "Cappuccino",
+                "price": 35000,
+                "image_url": "https://cdn.example.com/menu/cappuccino.png"
+            }
         }
     ]
 }

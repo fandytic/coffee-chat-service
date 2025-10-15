@@ -11,7 +11,6 @@ import (
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
 	"coffee-chat-service/modules/model"
-	"coffee-chat-service/modules/repository"
 	"coffee-chat-service/modules/websocket"
 	"gorm.io/gorm"
 )
@@ -160,9 +159,29 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 			"type": "NEW_ORDER",
 			"data": fullOrder,
 		}
-		notificationJSON, _ := json.Marshal(notification)
 
-		uc.Hub.BroadcastAdmins <- notificationJSON
+		if needType == model.OrderNeedRequestTreat && len(req.OrderItems) > 0 {
+			firstMenuID := req.OrderItems[0].MenuID
+			if menu, ok := menuMap[firstMenuID]; ok {
+				chatMessage.MenuID = new(uint)
+				*chatMessage.MenuID = menu.ID
+			}
+		}
+		if err := uc.ChatRepo.CreateMessage(chatMessage); err != nil {
+			log.Printf("failed to create chat message notification: %v", err)
+		} else {
+			uc.Hub.SendChatMessage(chatMessage)
+		}
+	}
+
+	var recipientSummary *model.OrderRecipient
+	if recipient != nil {
+		recipientSummary = &model.OrderRecipient{
+			CustomerID:  recipient.ID,
+			Name:        recipient.Name,
+			TableID:     recipient.TableID,
+			TableNumber: recipient.Table.TableNumber,
+		}
 	}
 
 	if recipient != nil {
