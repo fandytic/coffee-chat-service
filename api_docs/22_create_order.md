@@ -88,4 +88,4 @@ API akan secara otomatis menghitung `sub_total`, `tax`, dan `total` berdasarkan 
 }
 ```
 
-> **Catatan**: Ketika `need_type` bukan `self_order`, sistem akan mengirim ringkasan pesanan melalui WebSocket chat kepada pelanggan yang dipilih. Admin juga menerima notifikasi pesanan baru secara real-time.
+> **Catatan**: Ketika `need_type` bukan `self_order`, sistem akan mengirim ringkasan pesanan melalui WebSocket chat kepada pelanggan yang dipilih. Untuk `order_for_other`, pelanggan akan menerima pesan dengan format `"<Nama Pemesan> mentraktirmu!"` sedangkan `request_treat` akan menampilkan `"<Nama Pemesan> minta ditraktir!"`. Admin juga menerima notifikasi pesanan baru secara real-time.
