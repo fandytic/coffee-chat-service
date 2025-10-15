@@ -1,12 +1,9 @@
 package repository
 
 import (
-	"errors"
-
 	"gorm.io/gorm"
 
 	"coffee-chat-service/modules/entity"
-	"coffee-chat-service/modules/model"
 )
 
 type OrderRepository struct {
