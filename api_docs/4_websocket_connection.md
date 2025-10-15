@@ -70,6 +70,25 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     - `name` (string): Nama menu.
     - `price` (float): Harga menu.
     - `image_url` (string): URL gambar menu.
+- `order` (objek, opsional): Ringkasan pesanan ketika pesan tercipta dari proses "order untuk orang lain" atau "request treat".
+    - `id` (integer): ID pesanan.
+    - `customer_id` (integer): ID pelanggan pembuat pesanan.
+    - `recipient_id` (integer, opsional): ID pelanggan penerima traktiran.
+    - `table_id` (integer): ID meja yang digunakan untuk pesanan.
+    - `table_number` (string): Nomor meja.
+    - `table_name` (string): Nama meja (biasanya sama dengan nama pelanggan pada meja individual).
+    - `table_floor_number` (integer): Nomor lantai meja.
+    - `need_type` (string): Jenis kebutuhan pesanan (`order_for_other`, `request_treat`, dll.).
+    - `notes` (string, opsional): Catatan khusus dari pembuat pesanan.
+    - `sub_total` (float): Total harga sebelum pajak.
+    - `tax` (float): Nilai pajak yang diterapkan (11%).
+    - `total` (float): Total akhir setelah pajak.
+    - `order_items` (array): Detail item pesanan.
+      - `id` (integer): ID item pesanan.
+      - `menu_id` (integer): ID menu.
+      - `quantity` (integer): Jumlah menu yang dipesan.
+      - `price` (float): Harga satuan yang dikenakan pada saat pemesanan.
+      - `menu` (objek, opsional): Informasi menu lengkap, termasuk `image_url` untuk ditampilkan di UI.
 
 **Contoh Menerima Pesan Biasa:**
 ```json

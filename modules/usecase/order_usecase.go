@@ -13,6 +13,7 @@ import (
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/repository"
 	"coffee-chat-service/modules/websocket"
+
 	"gorm.io/gorm"
 )
 
@@ -170,7 +171,13 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 
 	var recipientSummary *model.OrderRecipient
 	if recipient != nil {
-		messageText := buildChatMessage(needType, customer.Name, recipient.Name, summaryLines, subTotal, tax, total, req.Notes, tableNumber)
+		var messageText string
+		if needType == model.OrderNeedForOthers {
+			messageText = fmt.Sprintf("%s mentraktirmu!", customer.Name)
+		} else if needType == model.OrderNeedRequestTreat {
+			messageText = fmt.Sprintf("%s minta ditraktir.", customer.Name)
+		}
+
 		chatMessage := &entity.ChatMessage{
 			SenderID:    customerID,
 			RecipientID: recipient.ID,
