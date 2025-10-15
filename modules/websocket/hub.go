@@ -55,10 +55,11 @@ type OrderInfo struct {
 }
 
 type RepliedMessageInfo struct {
-	ID         uint      `json:"id"`
-	Text       string    `json:"text"`
-	SenderName string    `json:"sender_name"`
-	Menu       *MenuInfo `json:"menu,omitempty"`
+	ID         uint       `json:"id"`
+	Text       string     `json:"text"`
+	SenderName string     `json:"sender_name"`
+	Menu       *MenuInfo  `json:"menu,omitempty"`
+	Order      *OrderInfo `json:"order,omitempty"`
 }
 
 type IncomingMessagePayload struct {
@@ -156,7 +157,12 @@ func (h *Hub) Run() {
 			var repliedToInfo *RepliedMessageInfo
 			if chatMessage.ReplyToMessageID != nil {
 				var originalMsg entity.ChatMessage
-				if err := h.DB.Preload("Sender").Preload("Menu").First(&originalMsg, *chatMessage.ReplyToMessageID).Error; err == nil {
+				err := h.DB.Preload("Sender").
+					Preload("Menu").
+					Preload("Order.Table.Floor").     // Ambil detail order
+					Preload("Order.OrderItems.Menu"). // Ambil detail item di dalam order
+					First(&originalMsg, *chatMessage.ReplyToMessageID).Error
+				if err == nil {
 					repliedToInfo = &RepliedMessageInfo{
 						ID:         originalMsg.ID,
 						Text:       originalMsg.Text,
@@ -170,6 +176,10 @@ func (h *Hub) Run() {
 							Price:    originalMsg.Menu.Price,
 							ImageURL: originalMsg.Menu.ImageURL,
 						}
+					}
+
+					if originalMsg.OrderID != nil && originalMsg.Order != nil {
+						repliedToInfo.Order = buildOrderInfo(originalMsg.Order)
 					}
 				}
 			}

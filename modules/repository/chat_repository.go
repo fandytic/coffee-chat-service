@@ -61,6 +61,8 @@ func (r *ChatRepository) GetMessageHistory(user1ID, user2ID uint) ([]entity.Chat
 	err := r.DB.Preload("Sender.Table.Floor").
 		Preload("ReplyToMessage.Sender").
 		Preload("ReplyToMessage.Menu").
+		Preload("ReplyToMessage.Order.Table.Floor").
+		Preload("ReplyToMessage.Order.OrderItems.Menu").
 		Preload("Menu").
 		Preload("Order.Table.Floor").
 		Preload("Order.OrderItems.Menu").

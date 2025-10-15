@@ -31,72 +31,34 @@ Ketika sebuah pesan merupakan balasan terhadap traktiran, properti `reply_to.men
     "message": "Chat history retrieved successfully",
     "data": [
         {
-            "message_id": 123,
-            "sender_id": 5,
-            "sender_name": "Christine",
-            "sender_photo_url": "https://cdn.example.com/avatars/christine.png",
-            "sender_table_number": "B12",
-            "sender_floor_number": 2,
-            "text": "Edward Cullen? haha",
-            "timestamp": "2025-10-07T19:59:00Z"
-        },
-        {
-            "message_id": 125,
-            "sender_id": 2,
-            "sender_name": "Edward",
-            "sender_photo_url": "https://cdn.example.com/avatars/edward.png",
-            "sender_table_number": "A04",
-            "sender_floor_number": 1,
-            "text": "Haha mirip dikit",
-            "timestamp": "2025-10-07T20:02:00Z",
-            "reply_to": {
-                "id": 123,
-                "text": "Edward Cullen? haha",
-                "sender_name": "Christine",
-                "menu": {
-                    "id": 42,
-                    "name": "Cappuccino",
-                    "price": 35000,
-                    "image_url": "https://cdn.example.com/menu/cappuccino.png"
-                }
-            }
-        },
-        {
             "message_id": 127,
             "sender_id": 5,
             "sender_name": "Christine",
-            "sender_photo_url": "https://cdn.example.com/avatars/christine.png",
-            "sender_table_number": "B12",
-            "sender_floor_number": 2,
             "text": "Ini traktir cappuccino favoritmu ya!",
             "timestamp": "2025-10-07T20:05:00Z",
             "order": {
                 "id": 88,
-                "customer_id": 5,
-                "recipient_id": 2,
-                "table_id": 7,
-                "table_number": "A04",
-                "table_name": "Edward",
-                "table_floor_number": 1,
                 "need_type": "order_for_other",
-                "notes": "Less sugar please",
-                "sub_total": 35000,
-                "tax": 3850,
                 "total": 38850,
-                "order_items": [
-                    {
-                        "id": 231,
-                        "menu_id": 42,
-                        "quantity": 1,
-                        "price": 35000,
-                        "menu": {
-                            "id": 42,
-                            "name": "Cappuccino",
-                            "price": 35000,
-                            "image_url": "https://cdn.example.com/menu/cappuccino.png"
-                        }
-                    }
-                ]
+                // ... detail pesanan lainnya
+            }
+        },
+        {
+            "message_id": 128,
+            "sender_id": 2,
+            "sender_name": "Edward",
+            "text": "Wah, makasih banyak ya!",
+            "timestamp": "2025-10-07T20:06:00Z",
+            "reply_to": {
+                "id": 127,
+                "text": "Ini traktir cappuccino favoritmu ya!",
+                "sender_name": "Christine",
+                "order": {
+                    "id": 88,
+                    "need_type": "order_for_other",
+                    "total": 38850,
+                    // ... detail pesanan yang dibalas
+                }
             }
         }
     ]

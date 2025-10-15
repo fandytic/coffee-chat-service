@@ -112,23 +112,20 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
 **Contoh Menerima Pesan Balasan:**
 ```json
 {
-    "message_id": 125,
+    "message_id": 128,
     "sender_id": 2,
     "sender_name": "Edward",
-    "sender_photo_url": "/public/uploads/...",
-    "sender_table_number": "05",
-    "sender_floor_number": 1,
-    "text": "Haha mirip dikit",
-    "timestamp": "2025-10-07T20:02:00Z",
+    "text": "Wah, makasih banyak ya!",
+    "timestamp": "2025-10-07T20:06:00Z",
     "reply_to": {
-        "id": 123,
-        "text": "Edward Cullen? haha",
+        "id": 127,
+        "text": "Ini traktir cappuccino favoritmu ya!",
         "sender_name": "Christine",
-        "menu": {
-            "id": 42,
-            "name": "Cappuccino",
-            "price": 35000,
-            "image_url": "/public/uploads/cappuccino.png"
+        "order": {
+            "id": 88,
+            "need_type": "order_for_other",
+            "total": 38850,
+            // ... detail pesanan yang dibalas
         }
     }
 }
