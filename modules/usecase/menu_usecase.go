@@ -12,9 +12,10 @@ type MenuUseCase struct {
 
 func (uc *MenuUseCase) CreateMenu(req model.MenuRequest) (*entity.Menu, error) {
 	menu := &entity.Menu{
-		Name:     req.Name,
-		Price:    req.Price,
-		ImageURL: req.ImageURL,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		ImageURL:    req.ImageURL,
 	}
 	err := uc.MenuRepo.Create(menu)
 	return menu, err
@@ -34,6 +35,7 @@ func (uc *MenuUseCase) UpdateMenu(id uint, req model.MenuRequest) (*entity.Menu,
 		return nil, err
 	}
 	menu.Name = req.Name
+	menu.Description = req.Description
 	menu.Price = req.Price
 	menu.ImageURL = req.ImageURL
 	err = uc.MenuRepo.Update(menu)

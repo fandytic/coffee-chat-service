@@ -13,6 +13,7 @@ Membuat item menu baru. Gunakan API `/upload-image` terlebih dahulu untuk mendap
   ```json
   {
       "name": "Kopi Susu Gula Aren",
+      "description": "Kentang goreng renyah, cocok sebagai camilan",
       "price": 22000,
       "image_url": "/public/uploads/12345_kopi.jpg"
   }
@@ -29,6 +30,7 @@ Membuat item menu baru. Gunakan API `/upload-image` terlebih dahulu untuk mendap
           "UpdatedAt": "...",
           "DeletedAt": null,
           "name": "Kopi Susu Gula Aren",
+          "description": "Kentang goreng renyah, cocok sebagai camilan",
           "price": 22000,
           "image_url": "/public/uploads/12345_kopi.jpg"
       }
@@ -57,9 +59,10 @@ Mengambil daftar semua item menu. Bisa difilter berdasarkan nama.
               "CreatedAt": "...",
               "UpdatedAt": "...",
               "DeletedAt": null,
-              "name": "Kopi Susu Gula Aren",
-              "price": 22000,
-              "image_url": "/public/uploads/12345_kopi.jpg"
+              "name": "French Fries",
+              "description": "Kentang goreng renyah, cocok sebagai camilan",
+              "price": 25000,
+              "image_url": "/public/uploads/12345_fries.jpg"
           }
       ]
   }
