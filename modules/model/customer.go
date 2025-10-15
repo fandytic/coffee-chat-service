@@ -46,3 +46,9 @@ type AllCustomersResponse struct {
 	Status      string    `json:"status"`
 	LastLogin   time.Time `json:"last_login"`
 }
+
+type CustomerFilter struct {
+	Search      string
+	FloorNumber int
+	TableNumber string
+}

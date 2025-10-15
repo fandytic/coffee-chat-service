@@ -1,6 +1,10 @@
 package interfaces
 
-import "coffee-chat-service/modules/entity"
+import (
+	"coffee-chat-service/modules/entity"
+	"coffee-chat-service/modules/model"
+	"time"
+)
 
 type UnreadResult struct {
 	SenderID uint
@@ -8,10 +12,11 @@ type UnreadResult struct {
 }
 
 type CustomerRepositoryInterface interface {
-	FindAllActiveExcept(customerID uint) ([]entity.Customer, error)
+	FindAllActiveExcept(customerID uint, filter model.CustomerFilter) ([]entity.Customer, error)
 	CountUnreadMessagesFor(recipientID uint) ([]UnreadResult, error)
 	CheckTableExists(tableID uint) (bool, error)
 	CreateCustomer(customer *entity.Customer) error
 	FindAll(search string) ([]entity.Customer, error)
 	FindTableDetailsByID(tableID uint) (*entity.Table, error)
+	UpdateStatusForInactiveCustomers(timeout time.Duration) (int64, error)
 }

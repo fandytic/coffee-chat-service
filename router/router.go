@@ -60,11 +60,11 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	customerProtected.Get("/active-list", customerHandler.GetActiveCustomers)
 	customerProtected.Get("/stats", dashboardHandler.GetStats)
 	customerProtected.Get("/floor-plans/:floor_number", floorPlanHandler.GetFloorPlan)
+	customerProtected.Get("/floor-plans", floorPlanHandler.GetAllFloors)
 
 	customerProtected.Post("/chats/:sender_id/mark-as-read", chatHandler.MarkMessagesAsRead)
 	customerProtected.Get("/chats/:id", chatHandler.GetMessageHistory)
 
 	customerProtected.Get("/menus", menuHandler.GetAllMenus)
 	customerProtected.Post("/orders", orderHandler.CreateOrder)
-
 }
