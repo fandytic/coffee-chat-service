@@ -30,6 +30,30 @@ type MenuInfo struct {
 	ImageURL string  `json:"image_url"`
 }
 
+type OrderItemInfo struct {
+	ID       uint      `json:"id"`
+	MenuID   uint      `json:"menu_id"`
+	Quantity int       `json:"quantity"`
+	Price    float64   `json:"price"`
+	Menu     *MenuInfo `json:"menu,omitempty"`
+}
+
+type OrderInfo struct {
+	ID               uint            `json:"id"`
+	CustomerID       uint            `json:"customer_id"`
+	RecipientID      *uint           `json:"recipient_id,omitempty"`
+	TableID          uint            `json:"table_id"`
+	TableNumber      string          `json:"table_number"`
+	TableName        string          `json:"table_name"`
+	TableFloorNumber int             `json:"table_floor_number"`
+	NeedType         string          `json:"need_type"`
+	Notes            string          `json:"notes,omitempty"`
+	SubTotal         float64         `json:"sub_total"`
+	Tax              float64         `json:"tax"`
+	Total            float64         `json:"total"`
+	OrderItems       []OrderItemInfo `json:"order_items"`
+}
+
 type RepliedMessageInfo struct {
 	ID         uint      `json:"id"`
 	Text       string    `json:"text"`
@@ -48,6 +72,7 @@ type IncomingMessagePayload struct {
 	Timestamp         time.Time           `json:"timestamp"`
 	ReplyTo           *RepliedMessageInfo `json:"reply_to,omitempty"`
 	Menu              *MenuInfo           `json:"menu,omitempty"`
+	Order             *OrderInfo          `json:"order,omitempty"`
 }
 type Hub struct {
 	clients         map[*Client]bool
@@ -162,8 +187,17 @@ func (h *Hub) Run() {
 				}
 			}
 
+			var orderInfo *OrderInfo
+			if chatMessage.OrderID != nil {
+				if order, err := h.loadOrder(*chatMessage.OrderID); err == nil {
+					orderInfo = buildOrderInfo(order)
+				} else {
+					log.Printf("failed to load order for chat message %d: %v", chatMessage.ID, err)
+				}
+			}
+
 			if recipient, ok := h.customers[payload.RecipientID]; ok {
-				if payload, err := h.buildIncomingPayload(&chatMessage, &sender, repliedToInfo, menuInfo); err == nil {
+				if payload, err := h.buildIncomingPayload(&chatMessage, &sender, repliedToInfo, menuInfo, orderInfo); err == nil {
 					recipient.send <- payload
 				}
 			} else {
@@ -232,7 +266,16 @@ func (h *Hub) SendChatMessage(chatMessage *entity.ChatMessage) {
 		}
 	}
 
-	payload, err := h.buildIncomingPayload(chatMessage, &sender, repliedToInfo, menuInfo)
+	var orderInfo *OrderInfo
+	if chatMessage.OrderID != nil {
+		if order, err := h.loadOrder(*chatMessage.OrderID); err == nil {
+			orderInfo = buildOrderInfo(order)
+		} else {
+			log.Printf("failed to load order for chat message %d: %v", chatMessage.ID, err)
+		}
+	}
+
+	payload, err := h.buildIncomingPayload(chatMessage, &sender, repliedToInfo, menuInfo, orderInfo)
 	if err != nil {
 		return
 	}
@@ -242,7 +285,7 @@ func (h *Hub) SendChatMessage(chatMessage *entity.ChatMessage) {
 	}
 }
 
-func (h *Hub) buildIncomingPayload(chatMessage *entity.ChatMessage, sender *entity.Customer, repliedToInfo *RepliedMessageInfo, menuInfo *MenuInfo) ([]byte, error) {
+func (h *Hub) buildIncomingPayload(chatMessage *entity.ChatMessage, sender *entity.Customer, repliedToInfo *RepliedMessageInfo, menuInfo *MenuInfo, orderInfo *OrderInfo) ([]byte, error) {
 	if chatMessage == nil || sender == nil {
 		return nil, fmt.Errorf("invalid chat payload")
 	}
@@ -258,10 +301,74 @@ func (h *Hub) buildIncomingPayload(chatMessage *entity.ChatMessage, sender *enti
 		Timestamp:         chatMessage.CreatedAt,
 		ReplyTo:           repliedToInfo,
 		Menu:              menuInfo,
+		Order:             orderInfo,
 	}
 	responseJSON, err := json.Marshal(responsePayload)
 	if err != nil {
 		return nil, err
 	}
 	return responseJSON, nil
+}
+
+func (h *Hub) loadOrder(orderID uint) (*entity.Order, error) {
+	var order entity.Order
+	if err := h.DB.Preload("Table.Floor").Preload("OrderItems.Menu").First(&order, orderID).Error; err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+func buildOrderInfo(order *entity.Order) *OrderInfo {
+	if order == nil {
+		return nil
+	}
+
+	orderInfo := &OrderInfo{
+		ID:         order.ID,
+		CustomerID: order.CustomerID,
+		TableID:    order.TableID,
+		NeedType:   order.NeedType,
+		Notes:      order.Notes,
+		SubTotal:   order.SubTotal,
+		Tax:        order.Tax,
+		Total:      order.Total,
+	}
+
+	if order.RecipientID != nil {
+		orderInfo.RecipientID = order.RecipientID
+	}
+
+	if order.Table.ID != 0 {
+		orderInfo.TableNumber = order.Table.TableNumber
+		orderInfo.TableName = order.Table.TableName
+		if order.Table.Floor.ID != 0 {
+			orderInfo.TableFloorNumber = order.Table.Floor.FloorNumber
+		}
+	}
+
+	if len(order.OrderItems) > 0 {
+		items := make([]OrderItemInfo, 0, len(order.OrderItems))
+		for _, item := range order.OrderItems {
+			orderItemInfo := OrderItemInfo{
+				ID:       item.ID,
+				MenuID:   item.MenuID,
+				Quantity: item.Quantity,
+				Price:    item.Price,
+			}
+
+			if item.Menu.ID != 0 {
+				orderItemInfo.Menu = &MenuInfo{
+					ID:       item.Menu.ID,
+					Name:     item.Menu.Name,
+					Price:    item.Menu.Price,
+					ImageURL: item.Menu.ImageURL,
+				}
+			}
+
+			items = append(items, orderItemInfo)
+		}
+		orderInfo.OrderItems = items
+	}
+
+	return orderInfo
 }

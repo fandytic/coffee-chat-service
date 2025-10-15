@@ -175,6 +175,7 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 			SenderID:    customerID,
 			RecipientID: recipient.ID,
 			Text:        messageText,
+			OrderID:     &order.ID,
 		}
 
 		if needType == model.OrderNeedRequestTreat && len(req.OrderItems) > 0 {

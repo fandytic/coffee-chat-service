@@ -62,6 +62,8 @@ func (r *ChatRepository) GetMessageHistory(user1ID, user2ID uint) ([]entity.Chat
 		Preload("ReplyToMessage.Sender").
 		Preload("ReplyToMessage.Menu").
 		Preload("Menu").
+		Preload("Order.Table.Floor").
+		Preload("Order.OrderItems.Menu").
 		Where("(sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)",
 			user1ID, user2ID, user2ID, user1ID).
 		Order("created_at asc").

@@ -82,5 +82,64 @@ func buildChatHistoryMessage(message *entity.ChatMessage) model.ChatHistoryMessa
 		}
 	}
 
+	if message.OrderID != nil && message.Order != nil && message.Order.ID != 0 {
+		history.Order = buildChatHistoryOrder(message.Order)
+	}
+
 	return history
+}
+
+func buildChatHistoryOrder(order *entity.Order) *model.ChatHistoryOrder {
+	if order == nil {
+		return nil
+	}
+
+	orderHistory := &model.ChatHistoryOrder{
+		ID:         order.ID,
+		CustomerID: order.CustomerID,
+		NeedType:   order.NeedType,
+		TableID:    order.TableID,
+		Notes:      order.Notes,
+		SubTotal:   order.SubTotal,
+		Tax:        order.Tax,
+		Total:      order.Total,
+	}
+
+	if order.RecipientID != nil {
+		orderHistory.RecipientID = order.RecipientID
+	}
+
+	if order.Table.ID != 0 {
+		orderHistory.TableNumber = order.Table.TableNumber
+		orderHistory.TableName = order.Table.TableName
+		if order.Table.Floor.ID != 0 {
+			orderHistory.TableFloorNumber = order.Table.Floor.FloorNumber
+		}
+	}
+
+	if len(order.OrderItems) > 0 {
+		items := make([]model.ChatHistoryOrderItem, 0, len(order.OrderItems))
+		for _, item := range order.OrderItems {
+			orderItem := model.ChatHistoryOrderItem{
+				ID:       item.ID,
+				MenuID:   item.MenuID,
+				Quantity: item.Quantity,
+				Price:    item.Price,
+			}
+
+			if item.Menu.ID != 0 {
+				orderItem.Menu = &model.ChatHistoryMenu{
+					ID:       item.Menu.ID,
+					Name:     item.Menu.Name,
+					Price:    item.Menu.Price,
+					ImageURL: item.Menu.ImageURL,
+				}
+			}
+
+			items = append(items, orderItem)
+		}
+		orderHistory.OrderItems = items
+	}
+
+	return orderHistory
 }
