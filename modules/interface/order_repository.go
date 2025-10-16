@@ -8,4 +8,6 @@ type OrderRepositoryInterface interface {
 	CreateOrder(order *entity.Order) error
 	FindAll() ([]entity.Order, error)
 	FindByID(id uint) (*entity.Order, error)
+	FindWishlistByID(id uint) (*entity.Order, error)
+	UpdateOrder(order *entity.Order) error
 }

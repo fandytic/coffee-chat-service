@@ -67,4 +67,7 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 
 	customerProtected.Get("/menus", menuHandler.GetAllMenus)
 	customerProtected.Post("/orders", orderHandler.CreateOrder)
+
+	customerProtected.Get("/wishlists/:id", orderHandler.GetWishlistDetails)
+	customerProtected.Post("/wishlists/:id/accept", orderHandler.AcceptWishlist)
 }

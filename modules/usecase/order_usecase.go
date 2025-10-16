@@ -52,6 +52,11 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 		return nil, &model.ValidationError{Message: "customer does not have an assigned table"}
 	}
 
+	isWishlist := req.NeedType == model.OrderNeedRequestPublic
+	if isWishlist {
+		req.RecipientCustomerID = nil
+	}
+
 	var recipient *entity.Customer
 	if needType != model.OrderNeedSelf {
 		if req.RecipientCustomerID == nil {
@@ -147,61 +152,68 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 		OrderItems: orderItems,
 	}
 
+	if isWishlist {
+		order.Status = "pending_wishlist"
+	}
+
 	if recipient != nil {
-		order.RecipientID = new(uint)
-		*order.RecipientID = recipient.ID
+		order.RecipientID = &recipient.ID
 	}
 
 	if err := uc.OrderRepo.CreateOrder(order); err != nil {
 		return nil, err
 	}
 
-	if fullOrder, err := uc.OrderRepo.FindByID(order.ID); err == nil {
-		notification := map[string]interface{}{
-			"type": "NEW_ORDER",
-			"data": fullOrder,
-		}
-
-		if payload, err := json.Marshal(notification); err != nil {
-			log.Printf("failed to marshal order notification: %v", err)
-		} else {
-			uc.Hub.BroadcastAdmins <- payload
-		}
-	}
-
 	var recipientSummary *model.OrderRecipient
-	if recipient != nil {
-		var messageText string
-		if needType == model.OrderNeedForOthers {
-			messageText = fmt.Sprintf("%s mentraktirmu!", customer.Name)
-		} else if needType == model.OrderNeedRequestTreat {
-			messageText = fmt.Sprintf("%s minta ditraktir.", customer.Name)
-		}
 
-		chatMessage := &entity.ChatMessage{
-			SenderID:    customerID,
-			RecipientID: recipient.ID,
-			Text:        messageText,
-			OrderID:     &order.ID,
+	if isWishlist {
+		notification := map[string]interface{}{"type": "WISHLIST_UPDATED"}
+		if payload, err := json.Marshal(notification); err == nil {
+			uc.Hub.BroadcastToCustomers(payload)
 		}
-
-		if needType == model.OrderNeedRequestTreat && len(req.OrderItems) > 0 {
-			firstMenuID := req.OrderItems[0].MenuID
-			if menu, ok := menuMap[firstMenuID]; ok {
-				chatMessage.MenuID = new(uint)
-				*chatMessage.MenuID = menu.ID
+	} else {
+		if fullOrder, err := uc.OrderRepo.FindByID(order.ID); err == nil {
+			notification := map[string]interface{}{"type": "NEW_ORDER", "data": fullOrder}
+			if payload, err := json.Marshal(notification); err == nil {
+				uc.Hub.BroadcastAdmins <- payload
 			}
 		}
-		if err := uc.ChatRepo.CreateMessage(chatMessage); err != nil {
-			log.Printf("failed to create chat message notification: %v", err)
-		} else {
-			uc.Hub.SendChatMessage(chatMessage)
-		}
-		recipientSummary = &model.OrderRecipient{
-			CustomerID:  recipient.ID,
-			Name:        recipient.Name,
-			TableID:     recipient.TableID,
-			TableNumber: recipient.Table.TableNumber,
+
+		if recipient != nil {
+			if recipient != nil {
+				var messageText string
+				if needType == model.OrderNeedForOthers {
+					messageText = fmt.Sprintf("%s mentraktirmu!", customer.Name)
+				} else if needType == model.OrderNeedRequestTreat {
+					messageText = fmt.Sprintf("%s minta ditraktir.", customer.Name)
+				}
+
+				chatMessage := &entity.ChatMessage{
+					SenderID:    customerID,
+					RecipientID: recipient.ID,
+					Text:        messageText,
+					OrderID:     &order.ID,
+				}
+
+				if needType == model.OrderNeedRequestTreat && len(req.OrderItems) > 0 {
+					firstMenuID := req.OrderItems[0].MenuID
+					if menu, ok := menuMap[firstMenuID]; ok {
+						chatMessage.MenuID = new(uint)
+						*chatMessage.MenuID = menu.ID
+					}
+				}
+				if err := uc.ChatRepo.CreateMessage(chatMessage); err != nil {
+					log.Printf("failed to create chat message notification: %v", err)
+				} else {
+					uc.Hub.SendChatMessage(chatMessage)
+				}
+				recipientSummary = &model.OrderRecipient{
+					CustomerID:  recipient.ID,
+					Name:        recipient.Name,
+					TableID:     recipient.TableID,
+					TableNumber: recipient.Table.TableNumber,
+				}
+			}
 		}
 	}
 
@@ -253,32 +265,44 @@ func formatCurrency(amount float64) string {
 	return "Rp " + formatted
 }
 
-func buildChatMessage(needType, senderName, recipientName string, itemLines []string, subTotal, tax, total float64, notes, tableNumber string) string {
-	var builder strings.Builder
+func (uc *OrderUseCase) GetWishlistDetails(wishlistID uint) (*entity.Order, error) {
+	return uc.OrderRepo.FindByID(wishlistID)
+}
 
-	switch needType {
-	case model.OrderNeedForOthers:
-		builder.WriteString(fmt.Sprintf("%s mentraktirmu!\n", senderName))
-	case model.OrderNeedRequestTreat:
-		builder.WriteString(fmt.Sprintf("%s minta ditraktir!\n", senderName))
-	default:
-		builder.WriteString(fmt.Sprintf("%s membuat pesanan baru.\n", senderName))
+func (uc *OrderUseCase) AcceptWishlist(wishlistID, payerID uint) (*entity.Order, error) {
+	wishlist, err := uc.OrderRepo.FindByID(wishlistID)
+	if err != nil || wishlist.Status != "pending_wishlist" {
+		return nil, errors.New("wishlist not found or already taken")
 	}
 
-	if tableNumber != "" {
-		builder.WriteString(fmt.Sprintf("Meja: %s\n", tableNumber))
+	wishlist.Status = "pending"
+	wishlist.PayerCustomerID = &payerID
+
+	if err := uc.OrderRepo.UpdateOrder(wishlist); err != nil {
+		return nil, err
 	}
 
-	builder.WriteString("\nDetail Pesanan:\n")
-	builder.WriteString(strings.Join(itemLines, "\n"))
-	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("\nSub Total: %s\n", formatCurrency(subTotal)))
-	builder.WriteString(fmt.Sprintf("Pajak (11%%): %s\n", formatCurrency(tax)))
-	builder.WriteString(fmt.Sprintf("Total: %s", formatCurrency(total)))
-
-	if strings.TrimSpace(notes) != "" {
-		builder.WriteString(fmt.Sprintf("\nCatatan: %s", notes))
+	// 4. Kirim notifikasi ke admin
+	if fullOrder, err := uc.OrderRepo.FindByID(wishlist.ID); err == nil {
+		notification := map[string]interface{}{"type": "NEW_ORDER", "data": fullOrder}
+		if payload, err := json.Marshal(notification); err == nil {
+			uc.Hub.BroadcastAdmins <- payload
+		}
 	}
 
-	return builder.String()
+	notification := map[string]interface{}{"type": "WISHLIST_UPDATED"}
+	if payload, err := json.Marshal(notification); err == nil {
+		uc.Hub.BroadcastToCustomers(payload)
+	}
+
+	thankYouMessage := &entity.ChatMessage{
+		SenderID:    wishlist.CustomerID, // Pengirim adalah pembuat wishlist
+		RecipientID: payerID,             // Penerima adalah si pembayar
+		Text:        "Terima kasih orang baik...",
+	}
+	if err := uc.ChatRepo.CreateMessage(thankYouMessage); err == nil {
+		uc.Hub.SendChatMessage(thankYouMessage)
+	}
+
+	return wishlist, nil
 }

@@ -3,9 +3,10 @@ package model
 import "time"
 
 const (
-	OrderNeedSelf         = "self_order"
-	OrderNeedForOthers    = "order_for_other"
-	OrderNeedRequestTreat = "request_treat"
+	OrderNeedSelf          = "self_order"
+	OrderNeedForOthers     = "order_for_other"
+	OrderNeedRequestTreat  = "request_treat"
+	OrderNeedRequestPublic = "request_treat_public"
 )
 
 type CreateOrderRequest struct {

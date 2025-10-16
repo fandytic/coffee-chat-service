@@ -382,3 +382,15 @@ func buildOrderInfo(order *entity.Order) *OrderInfo {
 
 	return orderInfo
 }
+
+func (h *Hub) BroadcastToCustomers(message []byte) {
+	for _, customerClient := range h.customers {
+		select {
+		case customerClient.send <- message:
+		default:
+			close(customerClient.send)
+			delete(h.clients, customerClient)
+			delete(h.customers, customerClient.CustomerID)
+		}
+	}
+}

@@ -7,6 +7,7 @@ type TableData struct {
 	XCoordinate      float64 `json:"x"`
 	YCoordinate      float64 `json:"y"`
 	ActiveUsersCount int     `json:"active_users_count"`
+	WishlistID       *uint   `json:"wishlist_id,omitempty"`
 }
 
 type FloorPlanResponse struct {
