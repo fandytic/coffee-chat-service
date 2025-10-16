@@ -33,7 +33,8 @@ curl --location 'http://localhost:8080/admin/floor-plans/1' \
                 "table_name": "Dekat Jendela",
                 "x": 120,
                 "y": 250,
-                "active_users_count": 3
+                "active_users_count": 3,
+                "wishlist_id": 43
             },
             {
                 "table_id": 2,
@@ -41,7 +42,8 @@ curl --location 'http://localhost:8080/admin/floor-plans/1' \
                 "table_name": "Tengah",
                 "x": 350,
                 "y": 250,
-                "active_users_count": 2
+                "active_users_count": 2,
+                "wishlist_id": 43
             },
             {
                 "table_id": 6,
@@ -49,7 +51,8 @@ curl --location 'http://localhost:8080/admin/floor-plans/1' \
                 "table_name": "Payung Outdoor",
                 "x": 600,
                 "y": 300,
-                "active_users_count": 0
+                "active_users_count": 0,
+                "wishlist_id": 43
             }
         ]
     }

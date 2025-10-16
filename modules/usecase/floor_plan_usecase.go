@@ -47,8 +47,18 @@ func (uc *FloorPlanUseCase) GetFloorPlanByNumber(floorNumber int) (*model.FloorP
 		return nil, err
 	}
 
+	activeWishlists, err := uc.FloorPlanRepo.FindActiveWishlists()
+	if err != nil {
+		return nil, err
+	}
+
 	tables := make([]model.TableData, 0, len(floor.Tables))
 	for _, t := range floor.Tables {
+		var wishlistID *uint
+		if id, ok := activeWishlists[t.ID]; ok {
+			wishlistID = &id
+		}
+
 		tables = append(tables, model.TableData{
 			ID:               t.ID,
 			TableNumber:      t.TableNumber,
@@ -56,6 +66,7 @@ func (uc *FloorPlanUseCase) GetFloorPlanByNumber(floorNumber int) (*model.FloorP
 			XCoordinate:      t.XCoordinate,
 			YCoordinate:      t.YCoordinate,
 			ActiveUsersCount: userCounts[t.ID],
+			WishlistID:       wishlistID,
 		})
 	}
 

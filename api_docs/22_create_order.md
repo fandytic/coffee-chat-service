@@ -15,9 +15,11 @@ Setiap pesanan secara otomatis dikaitkan dengan meja tempat pelanggan duduk sehi
     -   `self_order` — pelanggan memesan untuk dirinya sendiri.
     -   `order_for_other` — pelanggan memesankan untuk pelanggan lain (misal traktir teman).
     -   `request_treat` — pelanggan meminta pelanggan lain mentraktir pesanannya.
+    -   `request_treat_public` - untuk minta traktir ke semua orang random.
 -   **`recipient_customer_id`**: ID pelanggan lain yang terlibat.
     -   Wajib diisi ketika `need_type` adalah `order_for_other` atau `request_treat`.
     -   Opsional (dan harus dikosongkan) ketika `need_type` adalah `self_order`.
+    -   `recipient_customer_id` harus null jika `need_type` adalah `request_treat_public`.
 -   **`items`**: Array dari objek yang berisi `menu_id` dan `quantity`.
 -   **`notes`** (opsional): Catatan tambahan untuk pesanan.
 

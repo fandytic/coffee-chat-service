@@ -45,3 +45,26 @@ func (h *OrderHandler) GetAllOrders(c *fiber.Ctx) error {
 	}
 	return model.SuccessResponse(c, fiber.StatusOK, "Orders retrieved successfully", orders)
 }
+
+func (h *OrderHandler) GetWishlistDetails(c *fiber.Ctx) error {
+	wishlistID, _ := c.ParamsInt("id")
+	wishlist, err := h.OrderService.GetWishlistDetails(uint(wishlistID))
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusNotFound, "Wishlist not found or already taken")
+	}
+	return model.SuccessResponse(c, fiber.StatusOK, "Wishlist details retrieved", wishlist)
+}
+
+func (h *OrderHandler) AcceptWishlist(c *fiber.Ctx) error {
+	wishlistID, _ := c.ParamsInt("id")
+	payerID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, "Invalid token")
+	}
+
+	order, err := h.OrderService.AcceptWishlist(uint(wishlistID), payerID)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return model.SuccessResponse(c, fiber.StatusOK, "Wishlist accepted, order placed", order)
+}

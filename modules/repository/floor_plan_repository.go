@@ -118,3 +118,31 @@ func (r *FloorPlanRepository) FindFloorByID(floorID uint) (*entity.Floor, error)
 	err := r.DB.First(&floor, floorID).Error
 	return &floor, err
 }
+
+func (r *FloorPlanRepository) FindActiveWishlists() (map[uint]uint, error) {
+	var wishlists []entity.Order
+	err := r.DB.Model(&entity.Order{}).Where("status = ?", "pending_wishlist").Find(&wishlists).Error
+	if err != nil {
+		return nil, err
+	}
+
+	wishlistMap := make(map[uint]uint) // Map dari table_id -> wishlist_order_id
+	for _, w := range wishlists {
+		wishlistMap[w.TableID] = w.ID
+	}
+	return wishlistMap, nil
+}
+
+func (r *OrderRepository) FindWishlistByID(id uint) (*entity.Order, error) {
+	var order entity.Order
+	err := r.DB.
+		Preload("Customer.Table").
+		Preload("OrderItems.Menu").
+		Where("status = ?", "pending_wishlist").
+		First(&order, id).Error
+	return &order, err
+}
+
+func (r *OrderRepository) UpdateOrder(order *entity.Order) error {
+	return r.DB.Save(order).Error
+}

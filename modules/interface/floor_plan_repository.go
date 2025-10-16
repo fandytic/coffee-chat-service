@@ -19,4 +19,5 @@ type FloorPlanRepositoryInterface interface {
 	DeleteTable(tableID uint) error
 	DeleteFloorAndTables(floorID uint, imagePath string) error
 	CountUsersPerTable() (map[uint]int, error)
+	FindActiveWishlists() (map[uint]uint, error)
 }
