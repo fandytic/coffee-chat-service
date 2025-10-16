@@ -14,17 +14,29 @@ func NewOrderRepository(db *gorm.DB) *OrderRepository {
 	return &OrderRepository{DB: db}
 }
 
+func (r *OrderRepository) FindWishlistByID(id uint) (*entity.Order, error) {
+	var order entity.Order
+	err := r.DB.
+		Preload("Customer").
+		Preload("OrderItems.Menu").
+		Where("status = ?", "pending_wishlist").
+		First(&order, id).Error
+	return &order, err
+}
+
+func (r *OrderRepository) UpdateOrder(order *entity.Order) error {
+	return r.DB.Save(order).Error
+}
+
 func (r *OrderRepository) FindMenusByIDs(menuIDs []uint) (map[uint]entity.Menu, error) {
 	var menus []entity.Menu
 	if err := r.DB.Where("id IN ?", menuIDs).Find(&menus).Error; err != nil {
 		return nil, err
 	}
-
 	menuMap := make(map[uint]entity.Menu)
 	for _, menu := range menus {
 		menuMap[menu.ID] = menu
 	}
-
 	return menuMap, nil
 }
 
@@ -56,6 +68,7 @@ func (r *OrderRepository) FindByID(id uint) (*entity.Order, error) {
 	var order entity.Order
 	err := r.DB.
 		Preload("Customer.Table").
+		Preload("Payer.Table"). // Muat juga data si pembayar
 		Preload("Recipient.Table").
 		Preload("Table").
 		Preload("OrderItems.Menu").

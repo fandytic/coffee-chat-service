@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"strings"
 
@@ -13,8 +12,6 @@ import (
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/repository"
 	"coffee-chat-service/modules/websocket"
-
-	"gorm.io/gorm"
 )
 
 const TAX_RATE = 0.11 // Pajak 11%
@@ -29,111 +26,62 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 	if len(req.OrderItems) == 0 {
 		return nil, &model.ValidationError{Message: "order must have at least one item"}
 	}
-
 	needType := strings.TrimSpace(req.NeedType)
 	if needType == "" {
 		return nil, &model.ValidationError{Message: "need_type is required"}
 	}
 
-	switch needType {
-	case model.OrderNeedSelf, model.OrderNeedForOthers, model.OrderNeedRequestTreat, model.OrderNeedRequestPublic:
-	default:
-		return nil, &model.ValidationError{Message: "invalid need_type value"}
-	}
-
-	customer, err := uc.OrderRepo.FindCustomerWithTable(customerID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, &model.ValidationError{Message: "customer not found"}
-		}
-		return nil, err
-	}
-	if customer.TableID == 0 {
-		return nil, &model.ValidationError{Message: "customer does not have an assigned table"}
-	}
-
-	isWishlist := req.NeedType == model.OrderNeedRequestPublic
+	isWishlist := needType == model.OrderNeedRequestPublic
 	if isWishlist {
 		req.RecipientCustomerID = nil
 	}
 
+	customer, err := uc.OrderRepo.FindCustomerWithTable(customerID)
+	if err != nil {
+		return nil, &model.ValidationError{Message: "customer not found"}
+	}
+	if customer.Table.ID == 0 {
+		return nil, &model.ValidationError{Message: "customer is not associated with a valid table"}
+	}
+
 	var recipient *entity.Customer
-	if needType != model.OrderNeedSelf {
+	if needType != model.OrderNeedSelf && !isWishlist {
 		if req.RecipientCustomerID == nil {
 			return nil, &model.ValidationError{Message: "recipient_customer_id is required"}
 		}
-		if *req.RecipientCustomerID == customerID && needType == model.OrderNeedForOthers {
-			return nil, &model.ValidationError{Message: "recipient must be different from the ordering customer"}
-		}
-
 		recipient, err = uc.OrderRepo.FindCustomerWithTable(*req.RecipientCustomerID)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, &model.ValidationError{Message: "recipient not found"}
-			}
-			return nil, err
-		}
-		if recipient.Status != "active" {
-			return nil, &model.ValidationError{Message: "recipient is not active"}
+			return nil, &model.ValidationError{Message: "recipient not found"}
 		}
 	}
 
-	uniqueMenuIDs := make(map[uint]struct{})
-	menuIDs := make([]uint, 0, len(req.OrderItems))
+	var menuIDs []uint
 	for _, item := range req.OrderItems {
-		if item.MenuID == 0 {
-			return nil, &model.ValidationError{Message: "menu_id is required for each item"}
-		}
-		if item.Quantity <= 0 {
-			return nil, &model.ValidationError{Message: "quantity must be greater than zero"}
-		}
-
-		if _, exists := uniqueMenuIDs[item.MenuID]; !exists {
-			uniqueMenuIDs[item.MenuID] = struct{}{}
-			menuIDs = append(menuIDs, item.MenuID)
-		}
+		menuIDs = append(menuIDs, item.MenuID)
 	}
-
 	menuMap, err := uc.OrderRepo.FindMenusByIDs(menuIDs)
-	if err != nil {
-		return nil, err
-	}
-	if len(menuMap) != len(menuIDs) {
+	if err != nil || len(menuMap) != len(menuIDs) {
 		return nil, &model.ValidationError{Message: "one or more menu items not found"}
 	}
 
 	var subTotal float64
-	orderItems := make([]entity.OrderItem, 0, len(req.OrderItems))
-	responseItems := make([]model.OrderItemSummary, 0, len(req.OrderItems))
-	summaryLines := make([]string, 0, len(req.OrderItems))
+	var orderItems []entity.OrderItem
+	var responseItems []model.OrderItemSummary
 	for _, item := range req.OrderItems {
 		menu := menuMap[item.MenuID]
 		lineTotal := menu.Price * float64(item.Quantity)
-
 		subTotal += lineTotal
-		orderItems = append(orderItems, entity.OrderItem{
-			MenuID:   item.MenuID,
-			Quantity: item.Quantity,
-			Price:    menu.Price,
-		})
-
-		responseItems = append(responseItems, model.OrderItemSummary{
-			MenuID:     menu.ID,
-			MenuName:   menu.Name,
-			Quantity:   item.Quantity,
-			UnitPrice:  menu.Price,
-			TotalPrice: lineTotal,
-		})
-
-		summaryLines = append(summaryLines, fmt.Sprintf("- %s x%d (%s)", menu.Name, item.Quantity, formatCurrency(lineTotal)))
+		orderItems = append(orderItems, entity.OrderItem{MenuID: item.MenuID, Quantity: item.Quantity, Price: menu.Price})
+		responseItems = append(responseItems, model.OrderItemSummary{MenuID: menu.ID, MenuName: menu.Name, Quantity: item.Quantity, UnitPrice: menu.Price, TotalPrice: lineTotal})
 	}
-
 	tax := subTotal * TAX_RATE
 	total := subTotal + tax
 
 	tableID := customer.TableID
 	tableNumber := customer.Table.TableNumber
 	tableName := customer.Table.TableName
+	var recipientSummary *model.OrderRecipient
+
 	if needType == model.OrderNeedForOthers && recipient != nil {
 		tableID = recipient.TableID
 		tableNumber = recipient.Table.TableNumber
@@ -155,7 +103,6 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 	if isWishlist {
 		order.Status = "pending_wishlist"
 	}
-
 	if recipient != nil {
 		order.RecipientID = &recipient.ID
 	}
@@ -163,8 +110,6 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 	if err := uc.OrderRepo.CreateOrder(order); err != nil {
 		return nil, err
 	}
-
-	var recipientSummary *model.OrderRecipient
 
 	if isWishlist {
 		notification := map[string]interface{}{"type": "WISHLIST_UPDATED"}
@@ -178,42 +123,26 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 				uc.Hub.BroadcastAdmins <- payload
 			}
 		}
-
 		if recipient != nil {
-			if recipient != nil {
-				var messageText string
-				if needType == model.OrderNeedForOthers {
-					messageText = fmt.Sprintf("%s mentraktirmu!", customer.Name)
-				} else if needType == model.OrderNeedRequestTreat {
-					messageText = fmt.Sprintf("%s minta ditraktir.", customer.Name)
-				}
-
-				chatMessage := &entity.ChatMessage{
-					SenderID:    customerID,
-					RecipientID: recipient.ID,
-					Text:        messageText,
-					OrderID:     &order.ID,
-				}
-
-				if needType == model.OrderNeedRequestTreat && len(req.OrderItems) > 0 {
-					firstMenuID := req.OrderItems[0].MenuID
-					if menu, ok := menuMap[firstMenuID]; ok {
-						chatMessage.MenuID = new(uint)
-						*chatMessage.MenuID = menu.ID
-					}
-				}
-				if err := uc.ChatRepo.CreateMessage(chatMessage); err != nil {
-					log.Printf("failed to create chat message notification: %v", err)
-				} else {
-					uc.Hub.SendChatMessage(chatMessage)
-				}
-				recipientSummary = &model.OrderRecipient{
-					CustomerID:  recipient.ID,
-					Name:        recipient.Name,
-					TableID:     recipient.TableID,
-					TableNumber: recipient.Table.TableNumber,
-				}
+			var messageText string
+			if needType == model.OrderNeedForOthers {
+				messageText = fmt.Sprintf("%s mentraktirmu!", customer.Name)
+			} else if needType == model.OrderNeedRequestTreat {
+				messageText = fmt.Sprintf("%s minta ditraktir.", customer.Name)
 			}
+			chatMessage := &entity.ChatMessage{SenderID: customerID, RecipientID: recipient.ID, Text: messageText, OrderID: &order.ID}
+			if err := uc.ChatRepo.CreateMessage(chatMessage); err == nil {
+				uc.Hub.SendChatMessage(chatMessage)
+			}
+		}
+	}
+
+	if recipient != nil {
+		recipientSummary = &model.OrderRecipient{
+			CustomerID:  recipient.ID,
+			Name:        recipient.Name,
+			TableID:     recipient.TableID,
+			TableNumber: recipient.Table.TableNumber,
 		}
 	}
 
@@ -266,13 +195,13 @@ func formatCurrency(amount float64) string {
 }
 
 func (uc *OrderUseCase) GetWishlistDetails(wishlistID uint) (*entity.Order, error) {
-	return uc.OrderRepo.FindByID(wishlistID)
+	return uc.OrderRepo.FindWishlistByID(wishlistID)
 }
 
 func (uc *OrderUseCase) AcceptWishlist(wishlistID, payerID uint) (*entity.Order, error) {
-	wishlist, err := uc.OrderRepo.FindByID(wishlistID)
-	if err != nil || wishlist.Status != "pending_wishlist" {
-		return nil, errors.New("wishlist not found or already taken")
+	wishlist, err := uc.OrderRepo.FindWishlistByID(wishlistID)
+	if err != nil {
+		return nil, errors.New("wishlist not found or has already been taken")
 	}
 
 	wishlist.Status = "pending"
@@ -282,7 +211,6 @@ func (uc *OrderUseCase) AcceptWishlist(wishlistID, payerID uint) (*entity.Order,
 		return nil, err
 	}
 
-	// 4. Kirim notifikasi ke admin
 	if fullOrder, err := uc.OrderRepo.FindByID(wishlist.ID); err == nil {
 		notification := map[string]interface{}{"type": "NEW_ORDER", "data": fullOrder}
 		if payload, err := json.Marshal(notification); err == nil {
@@ -296,8 +224,8 @@ func (uc *OrderUseCase) AcceptWishlist(wishlistID, payerID uint) (*entity.Order,
 	}
 
 	thankYouMessage := &entity.ChatMessage{
-		SenderID:    wishlist.CustomerID, // Pengirim adalah pembuat wishlist
-		RecipientID: payerID,             // Penerima adalah si pembayar
+		SenderID:    wishlist.CustomerID,
+		RecipientID: payerID,
 		Text:        "Terima kasih orang baik...",
 	}
 	if err := uc.ChatRepo.CreateMessage(thankYouMessage); err == nil {

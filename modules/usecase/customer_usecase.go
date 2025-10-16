@@ -146,3 +146,7 @@ func (uc *CustomerUseCase) CleanUpInactiveCustomers() {
 		log.Printf("INFO: Cleaned up %d inactive customer session(s)", rowsAffected)
 	}
 }
+
+func (uc *CustomerUseCase) RevokeCustomerAccess(customerID uint) error {
+	return uc.CustomerRepo.UpdateStatus(customerID, "revoked")
+}
