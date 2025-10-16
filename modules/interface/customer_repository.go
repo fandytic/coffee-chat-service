@@ -19,4 +19,5 @@ type CustomerRepositoryInterface interface {
 	FindAll(search string) ([]entity.Customer, error)
 	FindTableDetailsByID(tableID uint) (*entity.Table, error)
 	UpdateStatusForInactiveCustomers(timeout time.Duration) (int64, error)
+	UpdateStatus(customerID uint, status string) error
 }

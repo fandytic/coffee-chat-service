@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -80,4 +81,15 @@ func (r *CustomerRepository) UpdateStatusForInactiveCustomers(timeout time.Durat
 		Update("status", "inactive")
 
 	return result.RowsAffected, result.Error
+}
+
+func (r *CustomerRepository) UpdateStatus(customerID uint, status string) error {
+	result := r.DB.Model(&entity.Customer{}).Where("id = ?", customerID).Update("status", status)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("customer with ID %d not found", customerID)
+	}
+	return nil
 }

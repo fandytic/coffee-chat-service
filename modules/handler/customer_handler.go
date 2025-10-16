@@ -61,3 +61,16 @@ func (h *CustomerHandler) GetAllCustomers(c *fiber.Ctx) error {
 	}
 	return model.SuccessResponse(c, fiber.StatusOK, "Customers retrieved successfully", customers)
 }
+
+func (h *CustomerHandler) RevokeCustomerAccess(c *fiber.Ctx) error {
+	customerID, err := c.ParamsInt("id")
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusBadRequest, "Invalid customer ID")
+	}
+
+	if err := h.CustomerService.RevokeCustomerAccess(uint(customerID)); err != nil {
+		return model.ErrorResponse(c, fiber.StatusNotFound, err.Error())
+	}
+
+	return model.SuccessResponse(c, fiber.StatusOK, "Customer access revoked successfully", nil)
+}

@@ -132,17 +132,3 @@ func (r *FloorPlanRepository) FindActiveWishlists() (map[uint]uint, error) {
 	}
 	return wishlistMap, nil
 }
-
-func (r *OrderRepository) FindWishlistByID(id uint) (*entity.Order, error) {
-	var order entity.Order
-	err := r.DB.
-		Preload("Customer.Table").
-		Preload("OrderItems.Menu").
-		Where("status = ?", "pending_wishlist").
-		First(&order, id).Error
-	return &order, err
-}
-
-func (r *OrderRepository) UpdateOrder(order *entity.Order) error {
-	return r.DB.Save(order).Error
-}

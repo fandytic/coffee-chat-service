@@ -84,9 +84,10 @@ func main() {
 		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 	}))
 	app.Static("/public", "./public")
-	router.SetupRoutes(app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
+	router.SetupRoutes(
+		app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
 		imageUploadHandler, customerHandler, dashboardHandler, chatHandler, menuHandler,
-		orderHandler, hub)
+		orderHandler, hub, db)
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))

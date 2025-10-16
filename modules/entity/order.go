@@ -12,7 +12,7 @@ type Order struct {
 	Total           float64 `gorm:"not null"`
 	Tax             float64 `gorm:"not null"`
 	SubTotal        float64 `gorm:"not null"`
-	Status          string  `gorm:"default:'pending';not null"` // pending, pending_wishlist, processing, completed, cancelled
+	Status          string  `gorm:"default:'pending';not null"` // Contoh: pending, pending_wishlist, processing, completed
 	Notes           string
 	OrderItems      []OrderItem
 	Customer        Customer
