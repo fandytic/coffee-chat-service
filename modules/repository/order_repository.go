@@ -59,6 +59,7 @@ func (r *OrderRepository) FindAll() ([]entity.Order, error) {
 		Preload("Recipient.Table").
 		Preload("Table").
 		Preload("OrderItems.Menu").
+		Where("status != ?", "pending_wishlist").
 		Order("created_at desc").
 		Find(&orders).Error
 	return orders, err
@@ -68,7 +69,7 @@ func (r *OrderRepository) FindByID(id uint) (*entity.Order, error) {
 	var order entity.Order
 	err := r.DB.
 		Preload("Customer.Table").
-		Preload("Payer.Table"). // Muat juga data si pembayar
+		Preload("Payer.Table").
 		Preload("Recipient.Table").
 		Preload("Table").
 		Preload("OrderItems.Menu").
