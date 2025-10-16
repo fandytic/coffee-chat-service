@@ -36,7 +36,7 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 	}
 
 	switch needType {
-	case model.OrderNeedSelf, model.OrderNeedForOthers, model.OrderNeedRequestTreat:
+	case model.OrderNeedSelf, model.OrderNeedForOthers, model.OrderNeedRequestTreat, model.OrderNeedRequestPublic:
 	default:
 		return nil, &model.ValidationError{Message: "invalid need_type value"}
 	}

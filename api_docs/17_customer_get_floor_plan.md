@@ -36,7 +36,8 @@ Responsnya sama persis dengan endpoint admin, memberikan semua data yang dibutuh
                 "table_name": "Dekat Jendela",
                 "x": 120,
                 "y": 250,
-                "active_users_count": 3
+                "active_users_count": 3,
+                "wishlist_id": 43
             },
             {
                 "table_id": 2,
@@ -44,7 +45,8 @@ Responsnya sama persis dengan endpoint admin, memberikan semua data yang dibutuh
                 "table_name": "Tengah",
                 "x": 350,
                 "y": 250,
-                "active_users_count": 2
+                "active_users_count": 2,
+                "wishlist_id": 43
             }
         ]
     }
