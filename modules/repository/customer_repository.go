@@ -93,3 +93,9 @@ func (r *CustomerRepository) UpdateStatus(customerID uint, status string) error 
 	}
 	return nil
 }
+
+func (r *CustomerRepository) FindCustomerWithDetails(customerID uint) (*entity.Customer, error) {
+	var customer entity.Customer
+	err := r.DB.Preload("Table.Floor").First(&customer, customerID).Error
+	return &customer, err
+}

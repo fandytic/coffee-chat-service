@@ -394,3 +394,16 @@ func (h *Hub) BroadcastToCustomers(message []byte) {
 		}
 	}
 }
+
+func (h *Hub) BroadcastToAdmins(message []byte) {
+	for _, adminClient := range h.admins {
+		select {
+		case adminClient.send <- message:
+		default:
+			close(adminClient.send)
+			delete(h.clients, adminClient)
+			delete(h.admins, adminClient.AdminID)
+			log.Printf("Admin channel full or closed. Disconnecting Admin ID %d", adminClient.AdminID)
+		}
+	}
+}

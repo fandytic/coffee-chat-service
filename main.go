@@ -56,6 +56,7 @@ func main() {
 	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}
 	menuUseCase := &usecase.MenuUseCase{MenuRepo: menuRepo}
 	orderUseCase := &usecase.OrderUseCase{OrderRepo: orderRepo, ChatRepo: chatRepo, Hub: hub}
+	bellUseCase := &usecase.BellUseCase{CustomerRepo: customerRepo, Hub: hub}
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
@@ -68,6 +69,7 @@ func main() {
 	chatHandler := &handler.ChatHandler{ChatService: chatUseCase}
 	menuHandler := &handler.MenuHandler{MenuService: menuUseCase}
 	orderHandler := &handler.OrderHandler{OrderService: orderUseCase}
+	bellHandler := &handler.BellHandler{BellService: bellUseCase}
 
 	ticker := time.NewTicker(10 * time.Minute)
 	go func() {
@@ -87,7 +89,7 @@ func main() {
 	router.SetupRoutes(
 		app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
 		imageUploadHandler, customerHandler, dashboardHandler, chatHandler, menuHandler,
-		orderHandler, hub, db)
+		orderHandler, bellHandler, hub, db)
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))
