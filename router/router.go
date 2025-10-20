@@ -15,7 +15,8 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	floorPlanHandler *handler.FloorPlanHandler, imageUploadHandler *handler.ImageUploadHandler,
 	customerHandler *handler.CustomerHandler, dashboardHandler *handler.DashboardHandler,
 	chatHandler *handler.ChatHandler, menuHandler *handler.MenuHandler, orderHandler *handler.OrderHandler,
-	bellHandler *handler.BellHandler, blockHandler *handler.BlockHandler, hub *ws.Hub, db *gorm.DB) {
+	bellHandler *handler.BellHandler, blockHandler *handler.BlockHandler, groupHandler *handler.GroupHandler,
+	hub *ws.Hub, db *gorm.DB) {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
@@ -78,4 +79,9 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 
 	customerProtected.Post("/block/:id", blockHandler.BlockCustomer)
 	customerProtected.Post("/unblock/:id", blockHandler.UnblockCustomer)
+
+	customerProtected.Post("/groups", groupHandler.CreateGroup)
+	customerProtected.Get("/groups", groupHandler.GetCustomerGroups)
+	customerProtected.Post("/groups/:group_id/members", groupHandler.InviteMembers)
+	customerProtected.Get("/groups/:group_id/members", groupHandler.GetGroupMembers)
 }

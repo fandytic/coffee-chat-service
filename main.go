@@ -24,14 +24,16 @@ func main() {
 		&entity.Message{}, &entity.Admin{}, &entity.Floor{},
 		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{},
 		&entity.Menu{}, &entity.Order{}, &entity.OrderItem{},
-		&entity.CustomerBlock{},
+		&entity.CustomerBlock{}, &entity.ChatGroup{}, &entity.ChatGroupMember{},
+		&entity.GroupChatMessage{},
 	)
 
 	// Seeder untuk membuat admin default jika belum ada
 	createDefaultAdmin(db)
 	blockRepo := repository.NewBlockRepository(db)
+	groupRepo := repository.NewGroupRepository(db)
 
-	hub := ws.NewHub(db, blockRepo)
+	hub := ws.NewHub(db, blockRepo, groupRepo)
 	go hub.Run()
 
 	// Inisialisasi Repositories
@@ -62,6 +64,7 @@ func main() {
 	orderUseCase := &usecase.OrderUseCase{OrderRepo: orderRepo, ChatRepo: chatRepo, Hub: hub}
 	bellUseCase := &usecase.BellUseCase{CustomerRepo: customerRepo, Hub: hub}
 	blockUseCase := &usecase.BlockUseCase{BlockRepo: blockRepo}
+	groupUseCase := usecase.NewGroupUseCase(groupRepo)
 
 	// Inisialisasi Handlers
 	messageHandler := &handler.MessageHandler{MessageService: messageUseCase}
@@ -76,6 +79,7 @@ func main() {
 	orderHandler := &handler.OrderHandler{OrderService: orderUseCase}
 	bellHandler := &handler.BellHandler{BellService: bellUseCase}
 	blockHandler := &handler.BlockHandler{BlockService: blockUseCase}
+	groupHandler := handler.NewGroupHandler(groupUseCase)
 
 	ticker := time.NewTicker(10 * time.Minute)
 	go func() {
@@ -95,7 +99,7 @@ func main() {
 	router.SetupRoutes(
 		app, messageHandler, authHandler, qrCodeHandler, floorPlanHandler,
 		imageUploadHandler, customerHandler, dashboardHandler, chatHandler, menuHandler,
-		orderHandler, bellHandler, blockHandler, hub, db)
+		orderHandler, bellHandler, blockHandler, groupHandler, hub, db)
 
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(app.Listen(":8080"))

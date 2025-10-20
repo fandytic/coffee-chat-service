@@ -42,6 +42,16 @@ Untuk mengirim pesan, klien mengirimkan format JSON berikut. Untuk membalas pesa
 }
 ```
 
+***Contoh Mengirim Pesan Grup:***
+
+```JSON
+
+{
+    "group_id": 12,
+    "text": "Tim, kumpul di meja 05 ya!"
+}
+```
+
 ---
 ### 3. Menerima Pesan (Server -> Client)
 
@@ -74,6 +84,7 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     - `id` (integer): ID pesanan.
     - `customer_id` (integer): ID pelanggan pembuat pesanan.
     - `recipient_id` (integer, opsional): ID pelanggan penerima traktiran.
+    - `group_id` (integer, **opsional**): ID grup tujuan (untuk chat grup).
     - `table_id` (integer): ID meja yang digunakan untuk pesanan.
     - `table_number` (string): Nomor meja.
     - `table_name` (string): Nama meja (biasanya sama dengan nama pelanggan pada meja individual).
@@ -130,6 +141,32 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
     }
 }
 ```
+
+***Contoh Menerima Pesan Grup (dengan Traktir Menu):***
+
+```JSON
+
+{
+    "message_id": 501,
+    "group_id": 12,
+    "sender_id": 5,
+    "sender_name": "Christine",
+    "sender_photo_url": "/public/uploads/...",
+    "sender_table_number": "01",
+    "sender_floor_number": 1,
+    "text": "Guys, aku traktir French Fries ya buat grup!",
+    "timestamp": "2025-10-08T11:00:00Z",
+    "reply_to": null,
+    "menu": {
+        "id": 1,
+        "name": "French Fries",
+        "price": 25000,
+        "image_url": "/public/uploads/12345_fries.jpg"
+    },
+    "order": null
+}
+```
+
 Front-end kemudian dapat menggunakan `sender_id` untuk menampilkan nama dan foto pengirim yang sesuai dari daftar pelanggan aktif.
 
 ---
