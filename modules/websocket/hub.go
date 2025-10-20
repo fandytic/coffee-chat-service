@@ -18,10 +18,12 @@ type DirectMessage struct {
 }
 
 type MessagePayload struct {
-	RecipientID      uint   `json:"recipient_id"`
+	RecipientID      *uint  `json:"recipient_id,omitempty"`
+	GroupID          *uint  `json:"group_id,omitempty"`
 	Text             string `json:"text"`
 	ReplyToMessageID *uint  `json:"reply_to_message_id,omitempty"`
-	MenuID           *uint
+	MenuID           *uint  `json:"menu_id,omitempty"`
+	OrderID          *uint  `json:"order_id,omitempty"`
 }
 
 type MenuInfo struct {
@@ -76,6 +78,21 @@ type IncomingMessagePayload struct {
 	Menu              *MenuInfo           `json:"menu,omitempty"`
 	Order             *OrderInfo          `json:"order,omitempty"`
 }
+
+type IncomingGroupMessagePayload struct {
+	MessageID         uint                `json:"message_id"`
+	GroupID           uint                `json:"group_id"`
+	SenderID          uint                `json:"sender_id"`
+	SenderName        string              `json:"sender_name"`
+	SenderPhotoURL    string              `json:"sender_photo_url"`
+	SenderTableNumber string              `json:"sender_table_number"`
+	SenderFloorNumber int                 `json:"sender_floor_number"`
+	Text              string              `json:"text"`
+	Timestamp         time.Time           `json:"timestamp"`
+	ReplyTo           *RepliedMessageInfo `json:"reply_to,omitempty"`
+	Menu              *MenuInfo           `json:"menu,omitempty"`
+	Order             *OrderInfo          `json:"order,omitempty"`
+}
 type Hub struct {
 	clients         map[*Client]bool
 	customers       map[uint]*Client
@@ -87,9 +104,11 @@ type Hub struct {
 	DB              *gorm.DB
 	BroadcastAdmins chan []byte
 	BlockRepo       interfaces.BlockRepositoryInterface
+	GroupRepo       interfaces.GroupRepositoryInterface
 }
 
-func NewHub(db *gorm.DB, blockRepo interfaces.BlockRepositoryInterface) *Hub {
+func NewHub(db *gorm.DB, blockRepo interfaces.BlockRepositoryInterface,
+	groupRepo interfaces.GroupRepositoryInterface) *Hub {
 	return &Hub{
 		clients:         make(map[*Client]bool),
 		customers:       make(map[uint]*Client),
@@ -101,6 +120,7 @@ func NewHub(db *gorm.DB, blockRepo interfaces.BlockRepositoryInterface) *Hub {
 		BroadcastAdmins: make(chan []byte),
 		DB:              db,
 		BlockRepo:       blockRepo,
+		GroupRepo:       groupRepo,
 	}
 }
 
@@ -140,91 +160,12 @@ func (h *Hub) Run() {
 				continue
 			}
 
-			isBlocked, err := h.BlockRepo.IsBlocked(directMsg.SenderID, payload.RecipientID)
-			if err != nil {
-				log.Printf("Error checking block status: %v", err)
-				continue
-			}
-			if isBlocked {
-				log.Printf("Blocked message from %d to %d", directMsg.SenderID, payload.RecipientID)
-				continue
-			}
-
-			chatMessage := entity.ChatMessage{
-				SenderID:         directMsg.SenderID,
-				RecipientID:      payload.RecipientID,
-				Text:             payload.Text,
-				ReplyToMessageID: payload.ReplyToMessageID,
-				MenuID:           payload.MenuID,
-			}
-			if err := h.DB.Create(&chatMessage).Error; err != nil {
-				log.Printf("Failed to save chat message: %v", err)
-				continue
-			}
-
-			var sender entity.Customer
-			if err := h.DB.Preload("Table.Floor").First(&sender, directMsg.SenderID).Error; err != nil {
-				continue
-			}
-
-			var repliedToInfo *RepliedMessageInfo
-			if chatMessage.ReplyToMessageID != nil {
-				var originalMsg entity.ChatMessage
-				err := h.DB.Preload("Sender").
-					Preload("Menu").
-					Preload("Order.Table.Floor").     // Ambil detail order
-					Preload("Order.OrderItems.Menu"). // Ambil detail item di dalam order
-					First(&originalMsg, *chatMessage.ReplyToMessageID).Error
-				if err == nil {
-					repliedToInfo = &RepliedMessageInfo{
-						ID:         originalMsg.ID,
-						Text:       originalMsg.Text,
-						SenderName: originalMsg.Sender.Name,
-					}
-
-					if originalMsg.MenuID != nil && originalMsg.Menu != nil {
-						repliedToInfo.Menu = &MenuInfo{
-							ID:       originalMsg.Menu.ID,
-							Name:     originalMsg.Menu.Name,
-							Price:    originalMsg.Menu.Price,
-							ImageURL: originalMsg.Menu.ImageURL,
-						}
-					}
-
-					if originalMsg.OrderID != nil && originalMsg.Order != nil {
-						repliedToInfo.Order = buildOrderInfo(originalMsg.Order)
-					}
-				}
-			}
-
-			var menuInfo *MenuInfo
-			if chatMessage.MenuID != nil {
-				var menu entity.Menu
-				if err := h.DB.First(&menu, *chatMessage.MenuID).Error; err == nil {
-					menuInfo = &MenuInfo{
-						ID:       menu.ID,
-						Name:     menu.Name,
-						Price:    menu.Price,
-						ImageURL: menu.ImageURL,
-					}
-				}
-			}
-
-			var orderInfo *OrderInfo
-			if chatMessage.OrderID != nil {
-				if order, err := h.loadOrder(*chatMessage.OrderID); err == nil {
-					orderInfo = buildOrderInfo(order)
-				} else {
-					log.Printf("failed to load order for chat message %d: %v", chatMessage.ID, err)
-				}
-			}
-
-			if recipient, ok := h.customers[payload.RecipientID]; ok {
-				if payload, err := h.buildIncomingPayload(&chatMessage, &sender, repliedToInfo, menuInfo, orderInfo); err == nil {
-					recipient.send <- payload
-				}
+			if payload.GroupID != nil {
+				h.handleGroupMessage(directMsg.SenderID, payload)
+			} else if payload.RecipientID != nil {
+				h.handleDirectMessage(directMsg.SenderID, *payload.RecipientID, payload)
 			} else {
-				log.Printf("Recipient not found or offline: CustomerID %d", payload.RecipientID)
+				log.Printf("Invalid message payload: missing group_id and recipient_id")
 			}
 
 		case message := <-h.Broadcast:
@@ -428,5 +369,215 @@ func (h *Hub) BroadcastToAdmins(message []byte) {
 			delete(h.admins, adminClient.AdminID)
 			log.Printf("Admin channel full or closed. Disconnecting Admin ID %d", adminClient.AdminID)
 		}
+	}
+}
+
+func (h *Hub) handleDirectMessage(senderID, recipientID uint, payload MessagePayload) {
+	isBlocked, err := h.BlockRepo.IsBlocked(senderID, recipientID)
+	if err != nil {
+		log.Printf("Error checking block status: %v", err)
+		return
+	}
+	if isBlocked {
+		log.Printf("Blocked message from %d to %d", senderID, payload.RecipientID)
+		return
+	}
+
+	chatMessage := entity.ChatMessage{
+		SenderID:         senderID,
+		RecipientID:      recipientID,
+		Text:             payload.Text,
+		ReplyToMessageID: payload.ReplyToMessageID,
+		MenuID:           payload.MenuID,
+	}
+	if err := h.DB.Create(&chatMessage).Error; err != nil {
+		log.Printf("Failed to save chat message: %v", err)
+		return
+	}
+
+	var sender entity.Customer
+	if err := h.DB.Preload("Table.Floor").First(&sender, recipientID).Error; err != nil {
+		return
+	}
+
+	var repliedToInfo *RepliedMessageInfo
+	if chatMessage.ReplyToMessageID != nil {
+		var originalMsg entity.ChatMessage
+		err := h.DB.Preload("Sender").
+			Preload("Menu").
+			Preload("Order.Table.Floor").
+			Preload("Order.OrderItems.Menu").
+			First(&originalMsg, *chatMessage.ReplyToMessageID).Error
+		if err == nil {
+			repliedToInfo = &RepliedMessageInfo{
+				ID:         originalMsg.ID,
+				Text:       originalMsg.Text,
+				SenderName: originalMsg.Sender.Name,
+			}
+
+			if originalMsg.MenuID != nil && originalMsg.Menu != nil {
+				repliedToInfo.Menu = buildMenuInfo(originalMsg.Menu)
+			}
+
+			if originalMsg.OrderID != nil && originalMsg.Order != nil {
+				repliedToInfo.Order = buildOrderInfo(originalMsg.Order)
+			}
+		}
+	}
+
+	var menuInfo *MenuInfo
+	if chatMessage.MenuID != nil {
+		var menu entity.Menu
+		if err := h.DB.First(&menu, *chatMessage.MenuID).Error; err == nil {
+			menuInfo = buildMenuInfo(&menu)
+		}
+	}
+
+	var orderInfo *OrderInfo
+	if chatMessage.OrderID != nil {
+		if order, err := h.loadOrder(*chatMessage.OrderID); err == nil {
+			orderInfo = buildOrderInfo(order)
+		} else {
+			log.Printf("failed to load order for chat message %d: %v", chatMessage.ID, err)
+		}
+	}
+
+	if recipient, ok := h.customers[recipientID]; ok {
+		if payload, err := h.buildIncomingPayload(&chatMessage, &sender, repliedToInfo, menuInfo, orderInfo); err == nil {
+			recipient.send <- payload
+		}
+	} else {
+		log.Printf("Recipient not found or offline: CustomerID %d", payload.RecipientID)
+	}
+}
+
+func (h *Hub) handleGroupMessage(senderID uint, payload MessagePayload) {
+	groupID := *payload.GroupID
+
+	isMember, err := h.GroupRepo.IsCustomerMember(groupID, senderID)
+	if err != nil {
+		log.Printf("Error checking group membership: %v", err)
+		return
+	}
+	if !isMember {
+		log.Printf("Blocked group message: Sender %d is not member of group %d", senderID, groupID)
+		return
+	}
+
+	groupMessage := &entity.GroupChatMessage{
+		ChatGroupID:      groupID,
+		SenderID:         senderID,
+		Text:             payload.Text,
+		ReplyToMessageID: payload.ReplyToMessageID,
+		MenuID:           payload.MenuID,
+		OrderID:          payload.OrderID,
+	}
+	if err := h.GroupRepo.CreateGroupMessage(groupMessage); err != nil {
+		log.Printf("Failed to save group message: %v", err)
+		return
+	}
+
+	var sender entity.Customer
+	if err := h.DB.Preload("Table.Floor").First(&sender, senderID).Error; err != nil {
+		log.Printf("Failed to load sender for group message: %v", err)
+		return
+	}
+
+	var repliedToInfo *RepliedMessageInfo
+	if groupMessage.ReplyToMessageID != nil {
+		var originalMsg entity.GroupChatMessage
+		err := h.DB.Preload("Sender").
+			Preload("Menu").
+			Preload("Order.Table.Floor").
+			Preload("Order.OrderItems.Menu").
+			First(&originalMsg, *groupMessage.ReplyToMessageID).Error
+		if err == nil {
+			repliedToInfo = &RepliedMessageInfo{
+				ID:         originalMsg.ID,
+				Text:       originalMsg.Text,
+				SenderName: originalMsg.Sender.Name,
+			}
+			if originalMsg.MenuID != nil && originalMsg.Menu != nil {
+				repliedToInfo.Menu = buildMenuInfo(originalMsg.Menu)
+			}
+			if originalMsg.OrderID != nil && originalMsg.Order != nil {
+				repliedToInfo.Order = buildOrderInfo(originalMsg.Order)
+			}
+		}
+	}
+
+	var menuInfo *MenuInfo
+	if groupMessage.MenuID != nil {
+		var menu entity.Menu
+		if err := h.DB.First(&menu, *groupMessage.MenuID).Error; err == nil {
+			menuInfo = buildMenuInfo(&menu)
+		}
+	}
+
+	var orderInfo *OrderInfo
+	if groupMessage.OrderID != nil {
+		if order, err := h.loadOrder(*groupMessage.OrderID); err == nil {
+			orderInfo = buildOrderInfo(order)
+		} else {
+			log.Printf("failed to load order for group chat message %d: %v", groupMessage.ID, err)
+		}
+	}
+
+	responsePayload := IncomingGroupMessagePayload{
+		MessageID:         groupMessage.ID,
+		GroupID:           groupID,
+		SenderID:          sender.ID,
+		SenderName:        sender.Name,
+		SenderPhotoURL:    sender.PhotoURL,
+		SenderTableNumber: sender.Table.TableNumber,
+		SenderFloorNumber: sender.Table.Floor.FloorNumber,
+		Text:              groupMessage.Text,
+		Timestamp:         groupMessage.CreatedAt,
+		ReplyTo:           repliedToInfo,
+		Menu:              menuInfo,
+		Order:             orderInfo,
+	}
+	responseJSON, err := json.Marshal(responsePayload)
+	if err != nil {
+		log.Printf("Failed to marshal group message: %v", err)
+		return
+	}
+
+	h.BroadcastToGroup(groupID, senderID, responseJSON)
+}
+
+func (h *Hub) BroadcastToGroup(groupID, senderID uint, message []byte) {
+	members, err := h.GroupRepo.GetGroupMembers(groupID)
+	if err != nil {
+		log.Printf("Failed to get group members for broadcast: %v", err)
+		return
+	}
+
+	for _, member := range members {
+		if member.CustomerID == senderID {
+			continue
+		}
+
+		if client, ok := h.customers[member.CustomerID]; ok {
+			select {
+			case client.send <- message:
+			default:
+				close(client.send)
+				delete(h.clients, client)
+				delete(h.customers, client.CustomerID)
+			}
+		}
+	}
+}
+
+func buildMenuInfo(menu *entity.Menu) *MenuInfo {
+	if menu == nil {
+		return nil
+	}
+	return &MenuInfo{
+		ID:       menu.ID,
+		Name:     menu.Name,
+		Price:    menu.Price,
+		ImageURL: menu.ImageURL,
 	}
 }
