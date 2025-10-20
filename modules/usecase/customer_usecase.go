@@ -18,6 +18,7 @@ type CustomerUseCase struct {
 	CustomerRepo interfaces.CustomerRepositoryInterface
 	ChatRepo     interfaces.ChatRepositoryInterface
 	OrderRepo    interfaces.OrderRepositoryInterface
+	BlockRepo    interfaces.BlockRepositoryInterface
 }
 
 func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.CustomerCheckInResponse, error) {
@@ -88,6 +89,12 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint, filter mo
 		activeWishlists = make(map[uint]uint)
 	}
 
+	blockedMap, err := uc.BlockRepo.GetBlockedList(loggedInCustomerID)
+	if err != nil {
+		log.Printf("Warning: could not retrieve blocked list: %v", err)
+		blockedMap = make(map[uint]bool)
+	}
+
 	customerResponses := make([]model.ActiveCustomerResponse, 0, len(customers))
 	for _, cust := range customers {
 		var lastMsg *model.LastMessage
@@ -103,6 +110,8 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint, filter mo
 			wishlistID = &id
 		}
 
+		_, isBlocked := blockedMap[cust.ID]
+
 		customerResponses = append(customerResponses, model.ActiveCustomerResponse{
 			ID:                  cust.ID,
 			Name:                cust.Name,
@@ -112,6 +121,7 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint, filter mo
 			UnreadMessagesCount: unreadMap[cust.ID],
 			LastMessage:         lastMsg,
 			WishlistID:          wishlistID,
+			IsBlocked:           isBlocked,
 		})
 	}
 

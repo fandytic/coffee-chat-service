@@ -63,7 +63,8 @@ Setiap objek pelanggan sekarang dapat memiliki `wishlist_id` jika mereka memilik
                     "text": "Kok ga dibales?",
                     "timestamp": "2025-10-07T20:03:00Z"
                 },
-                "wishlist_id": 43
+                "wishlist_id": 43,
+                "is_blocked": true
             },
             {
                 "id": 2,
@@ -75,7 +76,8 @@ Setiap objek pelanggan sekarang dapat memiliki `wishlist_id` jika mereka memilik
                 "last_message": {
                     "text": "Bro, join sini lah...",
                     "timestamp": "2025-10-07T20:02:00Z"
-                }
+                },
+                "is_blocked": true
             },
             {
                 "id": 4,
@@ -85,7 +87,8 @@ Setiap objek pelanggan sekarang dapat memiliki `wishlist_id` jika mereka memilik
                 "floor_number": 1,
                 "unread_messages_count": 0,
                 "last_message": null,
-                "wishlist_id": 43
+                "wishlist_id": 43,
+                "is_blocked": true
             }
         ]
     }

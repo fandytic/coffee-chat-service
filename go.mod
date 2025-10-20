@@ -3,6 +3,7 @@ module coffee-chat-service
 go 1.23.5
 
 require (
+	github.com/chai2010/webp v1.1.1
 	github.com/gofiber/contrib/jwt v1.1.0
 	github.com/gofiber/contrib/websocket v1.2.2
 	github.com/gofiber/fiber/v2 v2.52.6

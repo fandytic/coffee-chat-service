@@ -32,6 +32,7 @@ type ActiveCustomerResponse struct {
 	UnreadMessagesCount int          `json:"unread_messages_count"`
 	LastMessage         *LastMessage `json:"last_message,omitempty"`
 	WishlistID          *uint        `json:"wishlist_id,omitempty"`
+	IsBlocked           bool         `json:"is_blocked"`
 }
 
 type PaginatedActiveCustomersResponse struct {
