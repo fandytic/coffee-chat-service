@@ -17,6 +17,7 @@ import (
 type CustomerUseCase struct {
 	CustomerRepo interfaces.CustomerRepositoryInterface
 	ChatRepo     interfaces.ChatRepositoryInterface
+	OrderRepo    interfaces.OrderRepositoryInterface
 }
 
 func (uc *CustomerUseCase) CheckIn(req model.CustomerCheckInRequest) (*model.CustomerCheckInResponse, error) {
@@ -80,6 +81,13 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint, filter mo
 		return nil, err
 	}
 
+	activeWishlists, err := uc.OrderRepo.FindActiveWishlistsByCustomerID()
+	if err != nil {
+		// Log error tapi jangan hentikan proses, anggap saja tidak ada wishlist
+		log.Printf("Warning: could not retrieve active wishlists: %v", err)
+		activeWishlists = make(map[uint]uint)
+	}
+
 	customerResponses := make([]model.ActiveCustomerResponse, 0, len(customers))
 	for _, cust := range customers {
 		var lastMsg *model.LastMessage
@@ -90,6 +98,11 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint, filter mo
 			}
 		}
 
+		var wishlistID *uint
+		if id, ok := activeWishlists[cust.ID]; ok {
+			wishlistID = &id
+		}
+
 		customerResponses = append(customerResponses, model.ActiveCustomerResponse{
 			ID:                  cust.ID,
 			Name:                cust.Name,
@@ -98,6 +111,7 @@ func (uc *CustomerUseCase) GetActiveCustomers(loggedInCustomerID uint, filter mo
 			FloorNumber:         cust.Table.Floor.FloorNumber,
 			UnreadMessagesCount: unreadMap[cust.ID],
 			LastMessage:         lastMsg,
+			WishlistID:          wishlistID,
 		})
 	}
 

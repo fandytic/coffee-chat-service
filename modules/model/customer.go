@@ -31,6 +31,7 @@ type ActiveCustomerResponse struct {
 	FloorNumber         int          `json:"floor_number"`
 	UnreadMessagesCount int          `json:"unread_messages_count"`
 	LastMessage         *LastMessage `json:"last_message,omitempty"`
+	WishlistID          *uint        `json:"wishlist_id,omitempty"`
 }
 
 type PaginatedActiveCustomersResponse struct {

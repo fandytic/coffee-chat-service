@@ -76,3 +76,20 @@ func (r *OrderRepository) FindByID(id uint) (*entity.Order, error) {
 		First(&order, id).Error
 	return &order, err
 }
+
+func (r *OrderRepository) FindActiveWishlistsByCustomerID() (map[uint]uint, error) {
+	var wishlists []entity.Order
+	err := r.DB.Model(&entity.Order{}).
+		Select("id, customer_id").
+		Where("status = ?", "pending_wishlist").
+		Find(&wishlists).Error
+	if err != nil {
+		return nil, err
+	}
+
+	wishlistMap := make(map[uint]uint)
+	for _, w := range wishlists {
+		wishlistMap[w.CustomerID] = w.ID
+	}
+	return wishlistMap, nil
+}

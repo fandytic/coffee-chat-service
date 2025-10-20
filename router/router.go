@@ -15,7 +15,7 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	floorPlanHandler *handler.FloorPlanHandler, imageUploadHandler *handler.ImageUploadHandler,
 	customerHandler *handler.CustomerHandler, dashboardHandler *handler.DashboardHandler,
 	chatHandler *handler.ChatHandler, menuHandler *handler.MenuHandler, orderHandler *handler.OrderHandler,
-	hub *ws.Hub, db *gorm.DB) {
+	bellHandler *handler.BellHandler, hub *ws.Hub, db *gorm.DB) {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
@@ -73,4 +73,6 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 
 	customerProtected.Get("/wishlists/:id", orderHandler.GetWishlistDetails)
 	customerProtected.Post("/wishlists/:id/accept", orderHandler.AcceptWishlist)
+
+	customerProtected.Post("/call-waiter", bellHandler.CallWaiter)
 }

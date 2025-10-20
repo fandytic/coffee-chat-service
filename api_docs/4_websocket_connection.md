@@ -173,3 +173,19 @@ Ketika seorang pelanggan membuat pesanan baru, admin akan menerima pesan dengan 
     }
 }
 ```
+
+#### Panggilan Waiter (Bell)
+
+Ketika seorang pelanggan menekan tombol panggil waiter, admin akan menerima pesan dengan format:
+
+```json
+{
+    "type": "WAITER_BELL",
+    "data": {
+        "customer_name": "Christine Stanley",
+        "table_number": "01",
+        "floor_number": 1,
+        "call_time": "2025-10-17T09:30:00Z"
+    }
+}
+```
