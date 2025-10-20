@@ -42,6 +42,7 @@ curl --location 'http://localhost:8080/customer/active-list?table=05' \
 ---
 
 ### Contoh Success Response (Code: 200)
+Setiap objek pelanggan sekarang dapat memiliki `wishlist_id` jika mereka memiliki permintaan traktiran publik yang aktif. Jika tidak, field ini akan `null`.
 
 ```json
 {
@@ -61,7 +62,8 @@ curl --location 'http://localhost:8080/customer/active-list?table=05' \
                 "last_message": {
                     "text": "Kok ga dibales?",
                     "timestamp": "2025-10-07T20:03:00Z"
-                }
+                },
+                "wishlist_id": 43
             },
             {
                 "id": 2,
@@ -82,7 +84,8 @@ curl --location 'http://localhost:8080/customer/active-list?table=05' \
                 "table_number": "03",
                 "floor_number": 1,
                 "unread_messages_count": 0,
-                "last_message": null
+                "last_message": null,
+                "wishlist_id": 43
             }
         ]
     }

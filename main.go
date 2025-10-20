@@ -51,6 +51,7 @@ func main() {
 	customerUseCase := &usecase.CustomerUseCase{
 		CustomerRepo: customerRepo,
 		ChatRepo:     chatRepo,
+		OrderRepo:    orderRepo,
 	}
 	dashboardUseCase := &usecase.DashboardUseCase{DashboardRepo: dashboardRepo}
 	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}

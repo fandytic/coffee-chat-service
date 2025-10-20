@@ -10,4 +10,5 @@ type OrderRepositoryInterface interface {
 	FindByID(id uint) (*entity.Order, error)
 	FindWishlistByID(id uint) (*entity.Order, error)
 	UpdateOrder(order *entity.Order) error
+	FindActiveWishlistsByCustomerID() (map[uint]uint, error)
 }
