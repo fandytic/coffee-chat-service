@@ -2,11 +2,16 @@ package usecase
 
 import (
 	"fmt"
-	"io"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+
+	"github.com/chai2010/webp"
 
 	"coffee-chat-service/modules/model"
 )
@@ -20,10 +25,19 @@ func (uc *ImageUploadUseCase) SaveImage(fileHeader *multipart.FileHeader) (*mode
 	}
 	defer file.Close()
 
-	fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(fileHeader.Filename))
-	filePath := filepath.Join("./public/uploads", fileName)
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image: %w", err)
+	}
 
-	if err := os.MkdirAll("./public/uploads", os.ModePerm); err != nil {
+	originalFileName := filepath.Base(fileHeader.Filename)
+	fileNameWithoutExt := strings.TrimSuffix(originalFileName, filepath.Ext(originalFileName))
+	newFileName := fmt.Sprintf("%d_%s.webp", time.Now().Unix(), fileNameWithoutExt)
+
+	uploadDir := "./public/uploads"
+	filePath := filepath.Join(uploadDir, newFileName)
+
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
@@ -33,11 +47,11 @@ func (uc *ImageUploadUseCase) SaveImage(fileHeader *multipart.FileHeader) (*mode
 	}
 	defer dst.Close()
 
-	if _, err := io.Copy(dst, file); err != nil {
-		return nil, fmt.Errorf("failed to save file: %w", err)
+	if err := webp.Encode(dst, img, &webp.Options{Quality: 80}); err != nil {
+		return nil, fmt.Errorf("failed to encode image to webp: %w", err)
 	}
 
-	imageURL := "/public/uploads/" + fileName
+	imageURL := "/public/uploads/" + newFileName
 
 	return &model.ImageUploadResponse{ImageURL: imageURL}, nil
 }

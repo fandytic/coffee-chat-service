@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"coffee-chat-service/modules/entity"
+	interfaces "coffee-chat-service/modules/interface"
 )
 
 type DirectMessage struct {
@@ -85,9 +86,10 @@ type Hub struct {
 	unregister      chan *Client
 	DB              *gorm.DB
 	BroadcastAdmins chan []byte
+	BlockRepo       interfaces.BlockRepositoryInterface
 }
 
-func NewHub(db *gorm.DB) *Hub {
+func NewHub(db *gorm.DB, blockRepo interfaces.BlockRepositoryInterface) *Hub {
 	return &Hub{
 		clients:         make(map[*Client]bool),
 		customers:       make(map[uint]*Client),
@@ -98,6 +100,7 @@ func NewHub(db *gorm.DB) *Hub {
 		unregister:      make(chan *Client),
 		BroadcastAdmins: make(chan []byte),
 		DB:              db,
+		BlockRepo:       blockRepo,
 	}
 }
 
@@ -134,6 +137,16 @@ func (h *Hub) Run() {
 			var payload MessagePayload
 			if err := json.Unmarshal(directMsg.Message, &payload); err != nil {
 				log.Printf("Error unmarshalling message: %v", err)
+				continue
+			}
+
+			isBlocked, err := h.BlockRepo.IsBlocked(directMsg.SenderID, payload.RecipientID)
+			if err != nil {
+				log.Printf("Error checking block status: %v", err)
+				continue
+			}
+			if isBlocked {
+				log.Printf("Blocked message from %d to %d", directMsg.SenderID, payload.RecipientID)
 				continue
 			}
 
@@ -242,6 +255,16 @@ func (h *Hub) Run() {
 
 func (h *Hub) SendChatMessage(chatMessage *entity.ChatMessage) {
 	if chatMessage == nil {
+		return
+	}
+
+	isBlocked, err := h.BlockRepo.IsBlocked(chatMessage.SenderID, chatMessage.RecipientID)
+	if err != nil {
+		log.Printf("Error checking block status for chat message %d: %v", chatMessage.ID, err)
+		return
+	}
+	if isBlocked {
+		log.Printf("Blocked chat notification from %d to %d", chatMessage.SenderID, chatMessage.RecipientID)
 		return
 	}
 

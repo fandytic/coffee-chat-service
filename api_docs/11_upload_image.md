@@ -25,6 +25,7 @@ curl --location 'http://localhost:8080/upload-image' \
 ---
 
 ### Contoh Success Response (Code: 200)
+Perhatikan bahwa `image_url` yang dikembalikan sekarang memiliki ekstensi `.webp`.
 
 ```json
 {
@@ -32,7 +33,7 @@ curl --location 'http://localhost:8080/upload-image' \
     "code": 200,
     "message": "Image uploaded successfully",
     "data": {
-        "image_url": "/public/uploads/1728243900_floor_plan.jpg"
+        "image_url": "/public/uploads/1728243900_menu_image.webp"
     }
 }
 ```
