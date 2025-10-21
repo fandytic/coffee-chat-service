@@ -27,7 +27,11 @@ func (uc *MessageUseCase) SaveAndBroadcastMessage(req model.SendMessageRequest) 
 		return nil, err
 	}
 
-	messageBytes, err := json.Marshal(message)
+	notification := map[string]interface{}{
+		"type": "ADMIN_BROADCAST",
+		"data": message,
+	}
+	messageBytes, err := json.Marshal(notification)
 	if err != nil {
 		log.Printf("error marshalling broadcast message: %v", err)
 	} else {
