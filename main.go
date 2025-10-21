@@ -59,7 +59,7 @@ func main() {
 		BlockRepo:    blockRepo,
 	}
 	dashboardUseCase := &usecase.DashboardUseCase{DashboardRepo: dashboardRepo}
-	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo}
+	chatUseCase := &usecase.ChatUseCase{ChatRepo: chatRepo, GroupRepo: groupRepo}
 	menuUseCase := &usecase.MenuUseCase{MenuRepo: menuRepo}
 	orderUseCase := &usecase.OrderUseCase{OrderRepo: orderRepo, ChatRepo: chatRepo, Hub: hub}
 	bellUseCase := &usecase.BellUseCase{CustomerRepo: customerRepo, Hub: hub}

@@ -72,3 +72,27 @@ func (r *ChatRepository) GetMessageHistory(user1ID, user2ID uint) ([]entity.Chat
 		Find(&messages).Error
 	return messages, err
 }
+
+func (r *ChatRepository) GetGroupMessages(groupID uint, limit int) ([]entity.GroupChatMessage, error) {
+	var messages []entity.GroupChatMessage
+
+	err := r.DB.
+		Preload("Sender.Table.Floor").
+		Preload("ReplyToMessage.Sender").
+		Preload("ReplyToMessage.Menu").
+		Preload("ReplyToMessage.Order.Table.Floor").
+		Preload("ReplyToMessage.Order.OrderItems.Menu").
+		Preload("Menu").
+		Preload("Order.Table.Floor").
+		Preload("Order.OrderItems.Menu").
+		Where("chat_group_id = ?", groupID).
+		Order("created_at desc").
+		Limit(limit).
+		Find(&messages).Error
+
+	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+		messages[i], messages[j] = messages[j], messages[i]
+	}
+
+	return messages, err
+}
