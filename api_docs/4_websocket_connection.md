@@ -104,18 +104,21 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
 **Contoh Menerima Pesan Biasa:**
 ```json
 {
-    "message_id": 124,
-    "sender_id": 5,
-    "sender_name": "Christine",
-    "sender_photo_url": "/public/uploads/...",
-    "sender_table_number": "01",
-    "text": "gw Christine",
-    "timestamp": "2025-10-07T20:00:00Z",
-    "menu": {
-        "id": 1,
-        "name": "French Fries",
-        "price": 25000,
-        "image_url": "/public/uploads/12345_fries.jpg"
+    "type": "CHAT_MESSAGE",
+    "data": {
+        "message_id": 124,
+        "sender_id": 5,
+        "sender_name": "Christine",
+        "sender_photo_url": "/public/uploads/...",
+        "sender_table_number": "01",
+        "text": "gw Christine",
+        "timestamp": "2025-10-07T20:00:00Z",
+        "menu": {
+            "id": 1,
+            "name": "French Fries",
+            "price": 25000,
+            "image_url": "/public/uploads/12345_fries.jpg"
+        }
     }
 }
 ```
@@ -123,20 +126,23 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
 **Contoh Menerima Pesan Balasan:**
 ```json
 {
-    "message_id": 128,
-    "sender_id": 2,
-    "sender_name": "Edward",
-    "text": "Wah, makasih banyak ya!",
-    "timestamp": "2025-10-07T20:06:00Z",
-    "reply_to": {
-        "id": 127,
-        "text": "Ini traktir cappuccino favoritmu ya!",
-        "sender_name": "Christine",
-        "order": {
-            "id": 88,
-            "need_type": "order_for_other",
-            "total": 38850,
-            // ... detail pesanan yang dibalas
+    "type": "CHAT_MESSAGE",
+    "data": {
+        "message_id": 128,
+        "sender_id": 2,
+        "sender_name": "Edward",
+        "text": "Wah, makasih banyak ya!",
+        "timestamp": "2025-10-07T20:06:00Z",
+        "reply_to": {
+            "id": 127,
+            "text": "Ini traktir cappuccino favoritmu ya!",
+            "sender_name": "Christine",
+            "order": {
+                "id": 88,
+                "need_type": "order_for_other",
+                "total": 38850,
+                // ... detail pesanan yang dibalas
+            }
         }
     }
 }
@@ -147,23 +153,26 @@ Klien akan menerima pesan dalam format JSON yang kaya akan informasi.
 ```JSON
 
 {
-    "message_id": 501,
-    "group_id": 12,
-    "sender_id": 5,
-    "sender_name": "Christine",
-    "sender_photo_url": "/public/uploads/...",
-    "sender_table_number": "01",
-    "sender_floor_number": 1,
-    "text": "Guys, aku traktir French Fries ya buat grup!",
-    "timestamp": "2025-10-08T11:00:00Z",
-    "reply_to": null,
-    "menu": {
-        "id": 1,
-        "name": "French Fries",
-        "price": 25000,
-        "image_url": "/public/uploads/12345_fries.jpg"
-    },
-    "order": null
+    "type": "CHAT_MESSAGE",
+    "data": {
+        "message_id": 501,
+        "group_id": 12,
+        "sender_id": 5,
+        "sender_name": "Christine",
+        "sender_photo_url": "/public/uploads/...",
+        "sender_table_number": "01",
+        "sender_floor_number": 1,
+        "text": "Guys, aku traktir French Fries ya buat grup!",
+        "timestamp": "2025-10-08T11:00:00Z",
+        "reply_to": null,
+        "menu": {
+            "id": 1,
+            "name": "French Fries",
+            "price": 25000,
+            "image_url": "/public/uploads/12345_fries.jpg"
+        },
+        "order": null
+    }
 }
 ```
 
@@ -224,5 +233,15 @@ Ketika seorang pelanggan menekan tombol panggil waiter, admin akan menerima pesa
         "floor_number": 1,
         "call_time": "2025-10-17T09:30:00Z"
     }
+}
+```
+
+#### Tipe Pesan: `WISHLIST_UPDATED`
+Terkirim **ke semua pelanggan** ketika wishlist baru dibuat atau diambil. Front-end harus memanggil ulang API denah (`GET /customer/floor-plans/:floor_number`) untuk memperbarui ikon hati.
+
+```json
+{
+    "type": "WISHLIST_UPDATED",
+    "data": null
 }
 ```

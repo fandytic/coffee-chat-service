@@ -12,6 +12,11 @@ import (
 	interfaces "coffee-chat-service/modules/interface"
 )
 
+type WebSocketMessage struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
+
 type DirectMessage struct {
 	SenderID uint
 	Message  []byte
@@ -277,7 +282,13 @@ func (h *Hub) buildIncomingPayload(chatMessage *entity.ChatMessage, sender *enti
 		Menu:              menuInfo,
 		Order:             orderInfo,
 	}
-	responseJSON, err := json.Marshal(responsePayload)
+
+	wrapper := WebSocketMessage{
+		Type: "CHAT_MESSAGE",
+		Data: responsePayload,
+	}
+
+	responseJSON, err := json.Marshal(wrapper)
 	if err != nil {
 		return nil, err
 	}
