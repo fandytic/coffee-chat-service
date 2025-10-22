@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 
 	"coffee-chat-service/modules/model"
@@ -43,6 +45,29 @@ func (h *ChatHandler) GetMessageHistory(c *fiber.Ctx) error {
 
 	history, err := h.ChatService.GetMessageHistory(loggedInCustomerID, uint(otherCustomerID))
 	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve chat history")
+	}
+
+	return model.SuccessResponse(c, fiber.StatusOK, "Chat history retrieved successfully", history)
+}
+
+func (h *ChatHandler) GetGroupMessageHistory(c *fiber.Ctx) error {
+	customerID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, err.Error())
+	}
+
+	groupID, err := c.ParamsInt("id")
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusBadRequest, "Invalid group ID")
+	}
+
+	history, err := h.ChatService.GetGroupMessageHistory(customerID, uint(groupID))
+	if err != nil {
+		var validationErr *model.ValidationError
+		if errors.As(err, &validationErr) {
+			return model.ErrorResponse(c, fiber.StatusForbidden, validationErr.Error())
+		}
 		return model.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve chat history")
 	}
 

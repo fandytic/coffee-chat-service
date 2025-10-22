@@ -7,4 +7,5 @@ type ChatRepositoryInterface interface {
 	FindLastMessages(userID uint) (map[uint]*entity.ChatMessage, error)
 	GetMessageHistory(user1ID, user2ID uint) ([]entity.ChatMessage, error)
 	CreateMessage(message *entity.ChatMessage) error
+	GetGroupMessages(groupID uint, limit int) ([]entity.GroupChatMessage, error)
 }

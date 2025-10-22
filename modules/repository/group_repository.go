@@ -50,20 +50,6 @@ func (r *GroupRepository) CreateGroupMessage(message *entity.GroupChatMessage) e
 	return r.DB.Create(message).Error
 }
 
-func (r *GroupRepository) GetGroupMessages(groupID uint, limit int) ([]entity.GroupChatMessage, error) {
-	var messages []entity.GroupChatMessage
-	err := r.DB.Preload("Sender").
-		Where("chat_group_id = ?", groupID).
-		Order("created_at desc").
-		Limit(limit).
-		Find(&messages).Error
-
-	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
-		messages[i], messages[j] = messages[j], messages[i]
-	}
-	return messages, err
-}
-
 func (r *GroupRepository) FindGroupsByCustomerID(customerID uint) ([]entity.ChatGroupMember, error) {
 	var memberships []entity.ChatGroupMember
 

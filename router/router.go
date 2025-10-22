@@ -84,4 +84,5 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 	customerProtected.Get("/groups", groupHandler.GetCustomerGroups)
 	customerProtected.Post("/groups/:group_id/members", groupHandler.InviteMembers)
 	customerProtected.Get("/groups/:group_id/members", groupHandler.GetGroupMembers)
+	customerProtected.Get("/groups/:id/history", chatHandler.GetGroupMessageHistory)
 }

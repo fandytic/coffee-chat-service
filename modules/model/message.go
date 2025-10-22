@@ -48,6 +48,7 @@ type ChatHistoryOrder struct {
 
 type ChatHistoryMessage struct {
 	MessageID         uint              `json:"message_id"`
+	ChatGroupID       *uint             `json:"group_id"`
 	SenderID          uint              `json:"sender_id"`
 	SenderName        string            `json:"sender_name"`
 	SenderPhotoURL    string            `json:"sender_photo_url"`

@@ -7,7 +7,8 @@ import (
 )
 
 type ChatUseCase struct {
-	ChatRepo interfaces.ChatRepositoryInterface
+	ChatRepo  interfaces.ChatRepositoryInterface
+	GroupRepo interfaces.GroupRepositoryInterface
 }
 
 func (uc *ChatUseCase) MarkMessagesAsRead(senderID, recipientID uint) error {
@@ -23,6 +24,28 @@ func (uc *ChatUseCase) GetMessageHistory(user1ID, user2ID uint) ([]model.ChatHis
 	history := make([]model.ChatHistoryMessage, 0, len(messages))
 	for _, message := range messages {
 		history = append(history, buildChatHistoryMessage(&message))
+	}
+
+	return history, nil
+}
+
+func (uc *ChatUseCase) GetGroupMessageHistory(customerID, groupID uint) ([]model.ChatHistoryMessage, error) {
+	isMember, err := uc.GroupRepo.IsCustomerMember(groupID, customerID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, &model.ValidationError{Message: "forbidden: you are not a member of this group"}
+	}
+
+	messages, err := uc.ChatRepo.GetGroupMessages(groupID, 50) // Ambil 50 pesan terakhir
+	if err != nil {
+		return nil, err
+	}
+
+	history := make([]model.ChatHistoryMessage, 0, len(messages))
+	for _, message := range messages {
+		history = append(history, buildGroupChatHistoryMessage(&message))
 	}
 
 	return history, nil
@@ -78,6 +101,66 @@ func buildChatHistoryMessage(message *entity.ChatMessage) model.ChatHistoryMessa
 			reply.Order = buildChatHistoryOrder(message.ReplyToMessage.Order)
 		}
 
+		history.ReplyTo = reply
+	}
+
+	if message.Menu != nil {
+		history.Menu = &model.ChatHistoryMenu{
+			ID:       message.Menu.ID,
+			Name:     message.Menu.Name,
+			Price:    message.Menu.Price,
+			ImageURL: message.Menu.ImageURL,
+		}
+	}
+
+	if message.OrderID != nil && message.Order != nil && message.Order.ID != 0 {
+		history.Order = buildChatHistoryOrder(message.Order)
+	}
+
+	return history
+}
+
+func buildGroupChatHistoryMessage(message *entity.GroupChatMessage) model.ChatHistoryMessage {
+	history := model.ChatHistoryMessage{
+		MessageID:   message.ID,
+		SenderID:    message.SenderID,
+		ChatGroupID: &message.ChatGroupID,
+		Text:        message.Text,
+		Timestamp:   message.CreatedAt,
+	}
+
+	if message.Sender.ID != 0 {
+		history.SenderName = message.Sender.Name
+		history.SenderPhotoURL = message.Sender.PhotoURL
+		if message.Sender.Table.ID != 0 {
+			history.SenderTableNumber = message.Sender.Table.TableNumber
+			if message.Sender.Table.Floor.ID != 0 {
+				history.SenderFloorNumber = message.Sender.Table.Floor.FloorNumber
+			}
+		}
+	}
+
+	if message.ReplyToMessageID != nil && message.ReplyToMessage != nil {
+		repliedSenderName := ""
+		if message.ReplyToMessage.Sender.ID != 0 {
+			repliedSenderName = message.ReplyToMessage.Sender.Name
+		}
+		reply := &model.ChatHistoryReply{
+			ID:         message.ReplyToMessage.ID,
+			Text:       message.ReplyToMessage.Text,
+			SenderName: repliedSenderName,
+		}
+		if message.ReplyToMessage.Menu != nil {
+			reply.Menu = &model.ChatHistoryMenu{
+				ID:       message.ReplyToMessage.Menu.ID,
+				Name:     message.ReplyToMessage.Menu.Name,
+				Price:    message.ReplyToMessage.Menu.Price,
+				ImageURL: message.ReplyToMessage.Menu.ImageURL,
+			}
+		}
+		if message.ReplyToMessage.OrderID != nil && message.ReplyToMessage.Order != nil {
+			reply.Order = buildChatHistoryOrder(message.ReplyToMessage.Order)
+		}
 		history.ReplyTo = reply
 	}
 

@@ -9,6 +9,5 @@ type GroupRepositoryInterface interface {
 	GetGroupMembers(groupID uint) ([]entity.ChatGroupMember, error)
 	IsCustomerMember(groupID, customerID uint) (bool, error)
 	CreateGroupMessage(message *entity.GroupChatMessage) error
-	GetGroupMessages(groupID uint, limit int) ([]entity.GroupChatMessage, error)
 	FindGroupsByCustomerID(customerID uint) ([]entity.ChatGroupMember, error)
 }
