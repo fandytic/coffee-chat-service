@@ -128,3 +128,32 @@ func (r *GroupRepository) MarkGroupMessagesAsRead(customerID, groupID uint) erro
 
 	return nil
 }
+
+func (r *GroupRepository) FindLastGroupMessages(groupIDs []uint) (map[uint]*entity.GroupChatMessage, error) {
+	var messages []entity.GroupChatMessage
+
+	if len(groupIDs) == 0 {
+		return make(map[uint]*entity.GroupChatMessage), nil
+	}
+
+	err := r.DB.Raw(`
+		SELECT * FROM group_chat_messages
+		WHERE (chat_group_id, id) IN (
+			SELECT chat_group_id, MAX(id)
+			FROM group_chat_messages
+			WHERE chat_group_id IN ?
+			GROUP BY chat_group_id
+		)
+	`, groupIDs).Scan(&messages).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	messageMap := make(map[uint]*entity.GroupChatMessage)
+	for i, msg := range messages {
+		messageMap[msg.ChatGroupID] = &messages[i]
+	}
+
+	return messageMap, nil
+}

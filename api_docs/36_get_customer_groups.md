@@ -32,6 +32,10 @@ Responsnya adalah sebuah array yang berisi daftar grup yang diikuti oleh pelangg
                 "Christine",
                 "Megan"
             ],
+            "last_message": {
+                    "text": "Bro, join sini lah...",
+                    "timestamp": "2025-10-07T20:02:00Z"
+                },
             "unread_count": 2
         },
         {
@@ -42,6 +46,10 @@ Responsnya adalah sebuah array yang berisi daftar grup yang diikuti oleh pelangg
                 "Christine",
                 "Jeremy"
             ],
+            "last_message": {
+                    "text": "Bro, join sini lah...",
+                    "timestamp": "2025-10-07T20:02:00Z"
+                },
             "unread_count": 0
         }
     ]

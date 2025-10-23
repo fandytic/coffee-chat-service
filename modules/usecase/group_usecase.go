@@ -120,14 +120,37 @@ func (uc *GroupUseCase) GetCustomerGroups(customerID uint) ([]model.GroupRespons
 		unreadMap = make(map[uint]int64)
 	}
 
+	var groupIDs []uint
+	for _, member := range memberships {
+		if member.ChatGroup.ID != 0 {
+			groupIDs = append(groupIDs, member.ChatGroup.ID)
+		}
+	}
+
+	lastMessagesMap, err := uc.GroupRepo.FindLastGroupMessages(groupIDs)
+	if err != nil {
+		log.Printf("Warning: could not retrieve group last messages: %v", err)
+		lastMessagesMap = make(map[uint]*entity.GroupChatMessage)
+	}
+
 	response := make([]model.GroupResponse, 0, len(memberships))
 	for _, member := range memberships {
 		if member.ChatGroup.ID != 0 {
+
+			var lastMsg *model.LastMessage
+			if msg, ok := lastMessagesMap[member.ChatGroup.ID]; ok {
+				lastMsg = &model.LastMessage{
+					Text:      msg.Text,
+					Timestamp: msg.CreatedAt,
+				}
+			}
+
 			response = append(response, model.GroupResponse{
 				ID:          member.ChatGroup.ID,
 				Name:        member.ChatGroup.Name,
 				CreatorID:   member.ChatGroup.CreatorID,
 				UnreadCount: unreadMap[member.ChatGroup.ID],
+				LastMessage: lastMsg,
 			})
 		}
 	}
