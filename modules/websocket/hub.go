@@ -271,7 +271,7 @@ func (h *Hub) buildIncomingPayload(chatMessage *entity.ChatMessage, sender *enti
 
 	responsePayload := IncomingMessagePayload{
 		MessageID:         chatMessage.ID,
-		SenderID:          sender.ID,
+		SenderID:          chatMessage.SenderID, // FIX: Use the actual sender ID from the message
 		SenderName:        sender.Name,
 		SenderPhotoURL:    sender.PhotoURL,
 		SenderTableNumber: sender.Table.TableNumber,
@@ -400,6 +400,7 @@ func (h *Hub) handleDirectMessage(senderID, recipientID uint, payload MessagePay
 		Text:             payload.Text,
 		ReplyToMessageID: payload.ReplyToMessageID,
 		MenuID:           payload.MenuID,
+		OrderID:          payload.OrderID,
 	}
 	if err := h.DB.Create(&chatMessage).Error; err != nil {
 		log.Printf("Failed to save chat message: %v", err)
@@ -407,7 +408,7 @@ func (h *Hub) handleDirectMessage(senderID, recipientID uint, payload MessagePay
 	}
 
 	var sender entity.Customer
-	if err := h.DB.Preload("Table.Floor").First(&sender, recipientID).Error; err != nil {
+	if err := h.DB.Preload("Table.Floor").First(&sender, senderID).Error; err != nil {
 		return
 	}
 
@@ -537,7 +538,7 @@ func (h *Hub) handleGroupMessage(senderID uint, payload MessagePayload) {
 	responsePayload := IncomingGroupMessagePayload{
 		MessageID:         groupMessage.ID,
 		GroupID:           groupID,
-		SenderID:          sender.ID,
+		SenderID:          groupMessage.SenderID, // FIX: Use the actual sender ID from the message
 		SenderName:        sender.Name,
 		SenderPhotoURL:    sender.PhotoURL,
 		SenderTableNumber: sender.Table.TableNumber,
