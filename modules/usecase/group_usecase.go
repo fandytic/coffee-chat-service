@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"log"
 
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
@@ -113,13 +114,20 @@ func (uc *GroupUseCase) GetCustomerGroups(customerID uint) ([]model.GroupRespons
 		return nil, err
 	}
 
+	unreadMap, err := uc.GroupRepo.CountUnreadMessagesPerGroup(customerID)
+	if err != nil {
+		log.Printf("Warning: could not retrieve group unread counts: %v", err)
+		unreadMap = make(map[uint]int64)
+	}
+
 	response := make([]model.GroupResponse, 0, len(memberships))
 	for _, member := range memberships {
 		if member.ChatGroup.ID != 0 {
 			response = append(response, model.GroupResponse{
-				ID:        member.ChatGroup.ID,
-				Name:      member.ChatGroup.Name,
-				CreatorID: member.ChatGroup.CreatorID,
+				ID:          member.ChatGroup.ID,
+				Name:        member.ChatGroup.Name,
+				CreatorID:   member.ChatGroup.CreatorID,
+				UnreadCount: unreadMap[member.ChatGroup.ID],
 			})
 		}
 	}

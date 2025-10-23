@@ -31,7 +31,8 @@ Responsnya adalah sebuah array yang berisi daftar grup yang diikuti oleh pelangg
                 "Edward",
                 "Christine",
                 "Megan"
-            ]
+            ],
+            "unread_count": 2
         },
         {
             "id": 2,
@@ -40,7 +41,8 @@ Responsnya adalah sebuah array yang berisi daftar grup yang diikuti oleh pelangg
             "members": [
                 "Christine",
                 "Jeremy"
-            ]
+            ],
+            "unread_count": 0
         }
     ]
 }

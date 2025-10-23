@@ -25,7 +25,7 @@ func main() {
 		&entity.Table{}, &entity.Customer{}, &entity.ChatMessage{},
 		&entity.Menu{}, &entity.Order{}, &entity.OrderItem{},
 		&entity.CustomerBlock{}, &entity.ChatGroup{}, &entity.ChatGroupMember{},
-		&entity.GroupChatMessage{},
+		&entity.GroupChatMessage{}, &entity.GroupMessageReadStatus{},
 	)
 
 	// Seeder untuk membuat admin default jika belum ada

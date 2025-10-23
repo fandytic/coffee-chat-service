@@ -34,3 +34,13 @@ type GroupChatMessage struct {
 	Order          *Order
 	ReplyToMessage *GroupChatMessage `gorm:"foreignKey:ReplyToMessageID;references:ID"`
 }
+
+type GroupMessageReadStatus struct {
+	gorm.Model
+	ChatGroupID       uint `gorm:"uniqueIndex:idx_group_cust_read"`
+	CustomerID        uint `gorm:"uniqueIndex:idx_group_cust_read"`
+	LastReadMessageID uint `gorm:"not null"`
+
+	ChatGroup ChatGroup
+	Customer  Customer
+}

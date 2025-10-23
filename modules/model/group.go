@@ -2,7 +2,7 @@ package model
 
 type CreateGroupRequest struct {
 	Name      string `json:"name"`
-	MemberIDs []uint `json:"member_ids"` // IDs customer yang pertama kali di-invite (selain pembuat)
+	MemberIDs []uint `json:"member_ids"`
 }
 
 type InviteToGroupRequest struct {
@@ -10,13 +10,14 @@ type InviteToGroupRequest struct {
 }
 
 type GroupResponse struct {
-	ID        uint   `json:"id"`
-	Name      string `json:"name"`
-	CreatorID uint   `json:"creator_id"`
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	CreatorID   uint   `json:"creator_id"`
+	UnreadCount int64  `json:"unread_count"`
 }
 
 type GroupMemberResponse struct {
-	CustomerID  uint   `json:"customer_id"` // Customer ID
+	CustomerID  uint   `json:"customer_id"`
 	Name        string `json:"name"`
 	PhotoURL    string `json:"photo_url"`
 	TableNumber string `json:"table_number"`
