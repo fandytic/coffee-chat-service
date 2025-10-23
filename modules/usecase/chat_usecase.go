@@ -4,6 +4,7 @@ import (
 	"coffee-chat-service/modules/entity"
 	interfaces "coffee-chat-service/modules/interface"
 	"coffee-chat-service/modules/model"
+	"log"
 )
 
 type ChatUseCase struct {
@@ -36,6 +37,10 @@ func (uc *ChatUseCase) GetGroupMessageHistory(customerID, groupID uint) ([]model
 	}
 	if !isMember {
 		return nil, &model.ValidationError{Message: "forbidden: you are not a member of this group"}
+	}
+
+	if err := uc.GroupRepo.MarkGroupMessagesAsRead(customerID, groupID); err != nil {
+		log.Printf("Warning: could not mark group messages as read: %v", err)
 	}
 
 	messages, err := uc.ChatRepo.GetGroupMessages(groupID, 50) // Ambil 50 pesan terakhir

@@ -59,3 +59,72 @@ func (r *GroupRepository) FindGroupsByCustomerID(customerID uint) ([]entity.Chat
 		Find(&memberships).Error
 	return memberships, err
 }
+
+func (r *GroupRepository) CountUnreadMessagesPerGroup(customerID uint) (map[uint]int64, error) {
+	type UnreadCountResult struct {
+		ChatGroupID uint
+		UnreadCount int64
+	}
+
+	var results []UnreadCountResult
+
+	err := r.DB.Raw(`
+		SELECT
+			m.chat_group_id,
+			COUNT(m.id) as unread_count
+		FROM
+			group_chat_messages m
+		JOIN
+			chat_group_members gm ON m.chat_group_id = gm.chat_group_id
+		LEFT JOIN
+			group_message_read_statuses rs ON m.chat_group_id = rs.chat_group_id AND gm.customer_id = rs.customer_id
+		WHERE
+			gm.customer_id = ?
+			AND m.id > COALESCE(rs.last_read_message_id, 0)
+			AND m.sender_id != ?
+		GROUP BY
+			m.chat_group_id
+	`, customerID, customerID).Scan(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	unreadMap := make(map[uint]int64)
+	for _, result := range results {
+		unreadMap[result.ChatGroupID] = result.UnreadCount
+	}
+	return unreadMap, nil
+}
+
+func (r *GroupRepository) MarkGroupMessagesAsRead(customerID, groupID uint) error {
+	var lastMessageID uint
+	err := r.DB.Model(&entity.GroupChatMessage{}).
+		Select("id").
+		Where("chat_group_id = ?", groupID).
+		Order("id DESC").
+		Limit(1).
+		Row().Scan(&lastMessageID)
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		return err
+	}
+
+	if lastMessageID > 0 {
+		readStatus := entity.GroupMessageReadStatus{
+			ChatGroupID:       groupID,
+			CustomerID:        customerID,
+			LastReadMessageID: lastMessageID,
+		}
+
+		return r.DB.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "chat_group_id"}, {Name: "customer_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"last_read_message_id"}),
+		}).Create(&readStatus).Error
+	}
+
+	return nil
+}

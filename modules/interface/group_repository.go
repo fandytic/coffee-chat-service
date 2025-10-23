@@ -10,4 +10,6 @@ type GroupRepositoryInterface interface {
 	IsCustomerMember(groupID, customerID uint) (bool, error)
 	CreateGroupMessage(message *entity.GroupChatMessage) error
 	FindGroupsByCustomerID(customerID uint) ([]entity.ChatGroupMember, error)
+	CountUnreadMessagesPerGroup(customerID uint) (map[uint]int64, error)
+	MarkGroupMessagesAsRead(customerID, groupID uint) error
 }
