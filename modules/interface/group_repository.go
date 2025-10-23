@@ -12,4 +12,5 @@ type GroupRepositoryInterface interface {
 	FindGroupsByCustomerID(customerID uint) ([]entity.ChatGroupMember, error)
 	CountUnreadMessagesPerGroup(customerID uint) (map[uint]int64, error)
 	MarkGroupMessagesAsRead(customerID, groupID uint) error
+	FindLastGroupMessages(groupIDs []uint) (map[uint]*entity.GroupChatMessage, error)
 }

@@ -10,10 +10,11 @@ type InviteToGroupRequest struct {
 }
 
 type GroupResponse struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	CreatorID   uint   `json:"creator_id"`
-	UnreadCount int64  `json:"unread_count"`
+	ID          uint         `json:"id"`
+	Name        string       `json:"name"`
+	CreatorID   uint         `json:"creator_id"`
+	UnreadCount int64        `json:"unread_count"`
+	LastMessage *LastMessage `json:"last_message,omitempty"`
 }
 
 type GroupMemberResponse struct {
