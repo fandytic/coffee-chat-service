@@ -548,7 +548,13 @@ func (h *Hub) handleGroupMessage(senderID uint, payload MessagePayload) {
 		Menu:              menuInfo,
 		Order:             orderInfo,
 	}
-	responseJSON, err := json.Marshal(responsePayload)
+
+	wrapper := WebSocketMessage{
+		Type: "CHAT_MESSAGE",
+		Data: responsePayload,
+	}
+
+	responseJSON, err := json.Marshal(wrapper)
 	if err != nil {
 		log.Printf("Failed to marshal group message: %v", err)
 		return
