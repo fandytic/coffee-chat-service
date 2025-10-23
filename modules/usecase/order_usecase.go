@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 
 	"coffee-chat-service/modules/entity"
@@ -166,32 +165,6 @@ func (uc *OrderUseCase) CreateOrder(customerID uint, req model.CreateOrderReques
 
 func (uc *OrderUseCase) GetAllOrders() ([]entity.Order, error) {
 	return uc.OrderRepo.FindAll()
-}
-
-func formatCurrency(amount float64) string {
-	rounded := int64(math.Round(amount))
-	if rounded == 0 {
-		return "Rp 0"
-	}
-
-	negative := false
-	if rounded < 0 {
-		negative = true
-		rounded = -rounded
-	}
-
-	digits := fmt.Sprintf("%d", rounded)
-	var parts []string
-	for len(digits) > 3 {
-		parts = append([]string{digits[len(digits)-3:]}, parts...)
-		digits = digits[:len(digits)-3]
-	}
-	parts = append([]string{digits}, parts...)
-	formatted := strings.Join(parts, ".")
-	if negative {
-		formatted = "-" + formatted
-	}
-	return "Rp " + formatted
 }
 
 func (uc *OrderUseCase) GetWishlistDetails(wishlistID uint) (*entity.Order, error) {
