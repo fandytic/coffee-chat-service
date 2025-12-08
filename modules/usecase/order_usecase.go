@@ -207,3 +207,52 @@ func (uc *OrderUseCase) AcceptWishlist(wishlistID, payerID uint) (*entity.Order,
 
 	return wishlist, nil
 }
+
+func (uc *OrderUseCase) GetCustomerOrders(customerID uint) ([]model.OrderHistoryResponse, error) {
+	orders, err := uc.OrderRepo.FindByCustomerID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	var response []model.OrderHistoryResponse
+	for _, order := range orders {
+		var previewItems []model.OrderItemSummary
+		limit := 3
+		if len(order.OrderItems) < 3 {
+			limit = len(order.OrderItems)
+		}
+
+		for i := 0; i < limit; i++ {
+			item := order.OrderItems[i]
+			previewItems = append(previewItems, model.OrderItemSummary{
+				MenuID:    item.MenuID,
+				MenuName:  item.Menu.Name,
+				Quantity:  item.Quantity,
+				UnitPrice: item.Price,
+			})
+		}
+
+		var recipientSummary *model.OrderRecipient
+		if order.Recipient != nil {
+			recipientSummary = &model.OrderRecipient{
+				CustomerID:  order.Recipient.ID,
+				Name:        order.Recipient.Name,
+				TableNumber: order.Recipient.Table.TableNumber,
+			}
+		}
+
+		response = append(response, model.OrderHistoryResponse{
+			ID:           order.ID,
+			OrderNumber:  fmt.Sprintf("ORD-%d", order.ID),
+			CreatedAt:    order.CreatedAt,
+			Status:       order.Status,
+			NeedType:     order.NeedType,
+			Total:        order.Total,
+			ItemCount:    len(order.OrderItems),
+			PreviewItems: previewItems,
+			Recipient:    recipientSummary,
+		})
+	}
+
+	return response, nil
+}

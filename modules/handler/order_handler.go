@@ -68,3 +68,17 @@ func (h *OrderHandler) AcceptWishlist(c *fiber.Ctx) error {
 	}
 	return model.SuccessResponse(c, fiber.StatusOK, "Wishlist accepted, order placed", order)
 }
+
+func (h *OrderHandler) GetCustomerOrders(c *fiber.Ctx) error {
+	customerID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, "Invalid token")
+	}
+
+	orders, err := h.OrderService.GetCustomerOrders(customerID)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve order history")
+	}
+
+	return model.SuccessResponse(c, fiber.StatusOK, "Order history retrieved successfully", orders)
+}
