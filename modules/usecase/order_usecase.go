@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 
 	"coffee-chat-service/modules/entity"
@@ -168,32 +167,6 @@ func (uc *OrderUseCase) GetAllOrders() ([]entity.Order, error) {
 	return uc.OrderRepo.FindAll()
 }
 
-func formatCurrency(amount float64) string {
-	rounded := int64(math.Round(amount))
-	if rounded == 0 {
-		return "Rp 0"
-	}
-
-	negative := false
-	if rounded < 0 {
-		negative = true
-		rounded = -rounded
-	}
-
-	digits := fmt.Sprintf("%d", rounded)
-	var parts []string
-	for len(digits) > 3 {
-		parts = append([]string{digits[len(digits)-3:]}, parts...)
-		digits = digits[:len(digits)-3]
-	}
-	parts = append([]string{digits}, parts...)
-	formatted := strings.Join(parts, ".")
-	if negative {
-		formatted = "-" + formatted
-	}
-	return "Rp " + formatted
-}
-
 func (uc *OrderUseCase) GetWishlistDetails(wishlistID uint) (*entity.Order, error) {
 	return uc.OrderRepo.FindWishlistByID(wishlistID)
 }
@@ -233,4 +206,66 @@ func (uc *OrderUseCase) AcceptWishlist(wishlistID, payerID uint) (*entity.Order,
 	}
 
 	return wishlist, nil
+}
+
+func (uc *OrderUseCase) GetCustomerOrders(customerID uint) ([]model.OrderHistoryResponse, error) {
+	orders, err := uc.OrderRepo.FindByCustomerID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	var response []model.OrderHistoryResponse
+	for _, order := range orders {
+		var previewItems []model.OrderItemSummary
+		limit := 3
+		if len(order.OrderItems) < 3 {
+			limit = len(order.OrderItems)
+		}
+
+		for i := 0; i < limit; i++ {
+			item := order.OrderItems[i]
+			previewItems = append(previewItems, model.OrderItemSummary{
+				MenuID:    item.MenuID,
+				MenuName:  item.Menu.Name,
+				Quantity:  item.Quantity,
+				UnitPrice: item.Price,
+			})
+		}
+
+		var recipientSummary *model.OrderRecipient
+		if order.Recipient != nil {
+			recipientSummary = &model.OrderRecipient{
+				CustomerID:  order.Recipient.ID,
+				Name:        order.Recipient.Name,
+				TableNumber: order.Recipient.Table.TableNumber,
+			}
+		}
+
+		response = append(response, model.OrderHistoryResponse{
+			ID:           order.ID,
+			OrderNumber:  fmt.Sprintf("ORD-%d", order.ID),
+			CreatedAt:    order.CreatedAt,
+			Status:       order.Status,
+			NeedType:     order.NeedType,
+			Total:        order.Total,
+			ItemCount:    len(order.OrderItems),
+			PreviewItems: previewItems,
+			Recipient:    recipientSummary,
+		})
+	}
+
+	return response, nil
+}
+
+func (uc *OrderUseCase) GetOrderDetail(orderID, customerID uint) (*entity.Order, error) {
+	order, err := uc.OrderRepo.FindByID(orderID)
+	if err != nil {
+		return nil, errors.New("order not found")
+	}
+
+	if order.CustomerID != customerID && (order.RecipientID == nil || *order.RecipientID != customerID) && (order.PayerCustomerID == nil || *order.PayerCustomerID != customerID) {
+		return nil, errors.New("forbidden: you do not own this order")
+	}
+
+	return order, nil
 }

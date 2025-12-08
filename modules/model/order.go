@@ -52,3 +52,15 @@ type OrderItemSummary struct {
 	UnitPrice  float64 `json:"unit_price"`
 	TotalPrice float64 `json:"total_price"`
 }
+
+type OrderHistoryResponse struct {
+	ID           uint               `json:"id"`
+	OrderNumber  string             `json:"order_number"`
+	CreatedAt    time.Time          `json:"created_at"`
+	Status       string             `json:"status"`    // pending, processing, completed
+	NeedType     string             `json:"need_type"` // self_order, order_for_other
+	Total        float64            `json:"total"`
+	ItemCount    int                `json:"item_count"`
+	PreviewItems []OrderItemSummary `json:"preview_items"`
+	Recipient    *OrderRecipient    `json:"recipient,omitempty"`
+}

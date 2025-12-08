@@ -93,3 +93,14 @@ func (r *OrderRepository) FindActiveWishlistsByCustomerID() (map[uint]uint, erro
 	}
 	return wishlistMap, nil
 }
+
+func (r *OrderRepository) FindByCustomerID(customerID uint) ([]entity.Order, error) {
+	var orders []entity.Order
+	err := r.DB.
+		Preload("OrderItems.Menu").
+		Preload("Recipient.Table").
+		Where("customer_id = ? OR payer_customer_id = ?", customerID, customerID).
+		Order("created_at desc").
+		Find(&orders).Error
+	return orders, err
+}
