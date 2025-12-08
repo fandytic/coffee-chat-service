@@ -13,7 +13,7 @@ import (
 	"coffee-chat-service/modules/websocket"
 )
 
-const TAX_RATE = 0.11 // Pajak 11%
+const TAX_RATE = 0.10 // Pajak 10%
 
 type OrderUseCase struct {
 	OrderRepo *repository.OrderRepository
