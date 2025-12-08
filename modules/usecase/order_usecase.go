@@ -256,3 +256,16 @@ func (uc *OrderUseCase) GetCustomerOrders(customerID uint) ([]model.OrderHistory
 
 	return response, nil
 }
+
+func (uc *OrderUseCase) GetOrderDetail(orderID, customerID uint) (*entity.Order, error) {
+	order, err := uc.OrderRepo.FindByID(orderID)
+	if err != nil {
+		return nil, errors.New("order not found")
+	}
+
+	if order.CustomerID != customerID && (order.RecipientID == nil || *order.RecipientID != customerID) && (order.PayerCustomerID == nil || *order.PayerCustomerID != customerID) {
+		return nil, errors.New("forbidden: you do not own this order")
+	}
+
+	return order, nil
+}

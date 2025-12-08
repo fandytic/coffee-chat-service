@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"strings"
 
 	"coffee-chat-service/modules/model"
 	"coffee-chat-service/modules/usecase"
@@ -81,4 +82,29 @@ func (h *OrderHandler) GetCustomerOrders(c *fiber.Ctx) error {
 	}
 
 	return model.SuccessResponse(c, fiber.StatusOK, "Order history retrieved successfully", orders)
+}
+
+func (h *OrderHandler) GetOrderDetail(c *fiber.Ctx) error {
+	customerID, err := utils.GetCustomerIDFromToken(c)
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusForbidden, "Invalid token")
+	}
+
+	orderID, err := c.ParamsInt("id")
+	if err != nil {
+		return model.ErrorResponse(c, fiber.StatusBadRequest, "Invalid order ID")
+	}
+
+	order, err := h.OrderService.GetOrderDetail(uint(orderID), customerID)
+	if err != nil {
+		if err.Error() == "order not found" {
+			return model.ErrorResponse(c, fiber.StatusNotFound, "Order not found")
+		}
+		if strings.Contains(err.Error(), "forbidden") {
+			return model.ErrorResponse(c, fiber.StatusForbidden, err.Error())
+		}
+		return model.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve order detail")
+	}
+
+	return model.SuccessResponse(c, fiber.StatusOK, "Order detail retrieved successfully", order)
 }
