@@ -19,6 +19,7 @@ func (r *OrderRepository) FindWishlistByID(id uint) (*entity.Order, error) {
 	err := r.DB.
 		Preload("Customer").
 		Preload("OrderItems.Menu").
+		Preload("Customer.Table").
 		Where("status = ?", "pending_wishlist").
 		First(&order, id).Error
 	return &order, err
