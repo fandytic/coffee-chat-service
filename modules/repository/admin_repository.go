@@ -20,6 +20,16 @@ func (r *AdminRepository) FindByUsername(username string) (*entity.Admin, error)
 	return &admin, err
 }
 
+func (r *AdminRepository) FindByID(id uint) (*entity.Admin, error) {
+	var admin entity.Admin
+	err := r.db.First(&admin, id).Error
+	return &admin, err
+}
+
 func (r *AdminRepository) Create(admin *entity.Admin) error {
 	return r.db.Create(admin).Error
+}
+
+func (r *AdminRepository) Update(admin *entity.Admin) error {
+	return r.db.Save(admin).Error
 }

@@ -42,3 +42,48 @@ func (uc *AuthUseCase) Login(req model.LoginRequest) (*model.LoginResponse, erro
 
 	return &model.LoginResponse{Token: t}, nil
 }
+
+func (uc *AuthUseCase) ResetPassword(req model.ResetPasswordRequest) error {
+	admin, err := uc.AdminRepo.FindByUsername(req.Username)
+	if err != nil {
+		return errors.New("admin not found")
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.New("failed to hash password")
+	}
+
+	admin.Password = string(hashedPassword)
+	return uc.AdminRepo.Update(admin)
+}
+
+func (uc *AuthUseCase) UpdatePassword(adminID uint, req model.UpdatePasswordRequest) error {
+	admin, err := uc.AdminRepo.FindByID(adminID)
+	if err != nil {
+		return errors.New("admin not found")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(req.OldPassword))
+	if err != nil {
+		return errors.New("invalid old password")
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.New("failed to hash password")
+	}
+
+	admin.Password = string(hashedPassword)
+	return uc.AdminRepo.Update(admin)
+}
+
+func (uc *AuthUseCase) UpdateUsername(adminID uint, req model.UpdateUsernameRequest) error {
+	admin, err := uc.AdminRepo.FindByID(adminID)
+	if err != nil {
+		return errors.New("admin not found")
+	}
+
+	admin.Username = req.NewUsername
+	return uc.AdminRepo.Update(admin)
+}

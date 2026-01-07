@@ -34,6 +34,9 @@ func SetupRoutes(app *fiber.App, messageHandler *handler.MessageHandler,
 
 	adminProtected := app.Group("/admin", middleware.AdminProtected())
 	adminProtected.Post("/logout", authHandler.Logout)
+	adminProtected.Post("/reset-password", authHandler.ResetPassword)
+	adminProtected.Put("/update-password", authHandler.UpdatePassword)
+	adminProtected.Put("/update-username", authHandler.UpdateUsername)
 
 	adminProtected.Post("/send", messageHandler.SendMessage)
 	adminProtected.Post("/generate-qr", qrCodeHandler.GenerateQRCode)
